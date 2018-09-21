@@ -1,0 +1,17 @@
+version: '3'
+services:
+  auction-backend:
+    image: maven:3.5-jdk-8
+    hostname: auction-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+    - zookeeper
+    - broker
+    - schema_registry
+    - connect
+    volumes:
+      - ../..:/usr/src/code
+      - ~/.m2:/root/.m2
+    working_dir: /usr/src/code
+    command: bash -c 'mvn clean install -DskipTests && cd examples/auction && mvn exec:java -Dexec.mainClass="io.simplesource.example.auction.RestApplication"'

@@ -1,0 +1,40 @@
+@namespace("io.simplesource.example.auction.bidding.wire")
+protocol BiddingSubsystem {
+
+
+  enum Status {
+    Reqested,
+    FundsReserved,
+    BidPlaced,
+    FundsReleased,
+    FundsCommitted
+  }
+
+  record BiddingId {
+    string AuctionId;
+  }
+
+  record AccountBiddingSagaCommand {
+    union {null, string } command;
+  }
+
+  record BidAndFundsReservationCreated {
+    string sagaId;
+  }
+
+  record BidAndFundsReservationUpdated {
+    string sagaId;
+  }
+
+  record AuctionWonAndFundsReleased  {
+    string sagaId;
+  }
+
+  record  BidFailedAndFundsReturned {
+    string sagaId;
+  }
+
+  record AccountBiddingSagaEvent {
+    union {BidAndFundsReservationCreated,BidAndFundsReservationUpdated,AuctionWonAndFundsReleased,BidFailedAndFundsReturned } event;
+  }
+}

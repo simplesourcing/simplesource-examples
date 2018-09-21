@@ -1,0 +1,21 @@
+<configuration scan="true" scanPeriod="10 seconds">
+
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date %level %logger{15} - %message%n%xException{10}</pattern>
+        </encoder>
+    </appender>
+
+
+    <logger name="io.simplesource" level="DEBUG"/>
+    <logger name="io.confluent.kafka.serializers" level="WARN"/>
+    <logger name="org.apache.kafka.streams.StreamsConfig" level="WARN"/>
+    <logger name="org.apache.kafka.clients" level="WARN"/>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>

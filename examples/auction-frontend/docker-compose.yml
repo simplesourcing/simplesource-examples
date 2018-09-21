@@ -1,0 +1,11 @@
+version: '3'
+services:
+    auction-frontend:
+        image: node:8
+        hostname: auction-frontend
+        ports:
+        - "3000:3000"
+        volumes:
+        - ../auction-frontend:/usr/src/code
+        working_dir: /usr/src/code
+        command: bash -c "npm install -g yarn && yarn install && yarn start"
