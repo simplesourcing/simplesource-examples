@@ -186,7 +186,7 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
     private Optional<Reason<CommandAPI.CommandError>> usernameNotTakenBefore(AccountKey accountKey, String username) {
         List<AccountView> usersWithName = accountRepository.findOtherAccountsWithUsername(accountKey.asString(), username);
         if (!usersWithName.isEmpty()) {
-            return Optional.of(Reason.of(CommandAPI.CommandError.CommandPublishError, "Username already exists"));
+            return Optional.of(Reason.of(CommandAPI.CommandError.CommandPublishError, "User name already exists"));
         }
 
         return Optional.empty();

@@ -1,3 +1,29 @@
+#### Running the application
+
+From the `examples/auction` folder:
+
+1. Start the backend dependencies in Docker
+    
+    ```bash
+    docker-compose up
+    ```
+    
+2. Start the backend application:
+    
+    ```bash
+    ./run.sh
+    ```
+    
+3. Run the front end in Docker:
+   
+   Change to the `examples/auction-frontend` folder:
+   
+   ```bash
+   docker-compose up 
+   ```
+   
+4. Open a web browser at [http://localhost:3000](http://localhost:3000)   
+   
 
 #### Test locally
 A new docker compose file is added in this module to support 3 new containers postgres, Kafka connect and Confluent control center.
