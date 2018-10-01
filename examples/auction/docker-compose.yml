@@ -68,7 +68,6 @@ services:
     command: "bash -c 'echo Waiting for Kafka to be ready... && \
                        cub zk-ready zookeeper:2181 120 && \
                        cub kafka-ready -b broker:9092 1 120 && \
-                       kafka-topics --create --topic account_avro_account-aggregate --if-not-exists --zookeeper zookeeper:2181 --partitions 10 --replication-factor 1 && \
                        kafka-topics --create --topic auction_account_projection --if-not-exists --zookeeper zookeeper:2181 --partitions 10 --replication-factor 1 && \
                        kafka-topics --create --topic auction_account_transactions_projection --if-not-exists --zookeeper zookeeper:2181 --partitions 10 --replication-factor 1 && \
                        kafka-topics --create --topic auction_auction_projection --if-not-exists --zookeeper zookeeper:2181 --partitions 10 --replication-factor 1 && \

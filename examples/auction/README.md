@@ -26,24 +26,17 @@ From the `examples/auction` folder:
    
 
 #### Test locally
-A new docker compose file is added in this module to support 3 new containers postgres, Kafka connect and Confluent control center.
-To run the application 
-
-* Stop all existing kafka containers which were running from the parent compose file 
-* If you are using Docker for Mac >= 1.12, Docker for Linux, or Docker for Windows 10, then please add the following lines 
+If you are using Docker for Mac >= 1.12, Docker for Linux, or Docker for Windows 10, then please add the following lines 
       to `/etc/hosts` or `C:\Windows\System32\Drivers\etc\hosts`:
       
 ```
 127.0.0.1   zookeeper
 127.0.0.1   broker
-127.0.0.1   connect
-127.0.0.1   control-center
-127.0.0.1   postgres
 127.0.0.1   schema_registry
+127.0.0.1   connect
 127.0.0.1   mongo-express
 127.0.0.1   mongo
 ```
-    * Wait until all containers start, and run the file simplesource/examples/auction/kafka_connect.sh to create the processed topic and Kafka connector instance.
 
 #### REST APIs for write side
 
