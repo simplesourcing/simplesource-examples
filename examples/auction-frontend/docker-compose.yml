@@ -8,4 +8,4 @@ services:
         volumes:
         - ../auction-frontend:/usr/src/code
         working_dir: /usr/src/code
-        command: bash -c "npm install -g yarn && yarn install && yarn start"
+        command: bash -c "yarn install && yarn start"
