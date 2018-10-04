@@ -1,10 +1,10 @@
 package io.simplesource.example.user;
 
 import io.simplesource.api.CommandAPI;
-import io.simplesource.api.CommandAPI.CommandError;
-import io.simplesource.data.Sequence;
+import io.simplesource.api.CommandError;
 import io.simplesource.data.FutureResult;
 import io.simplesource.data.NonEmptyList;
+import io.simplesource.data.Sequence;
 import io.simplesource.example.user.domain.UserCommand;
 import io.simplesource.example.user.domain.UserKey;
 import org.slf4j.Logger;

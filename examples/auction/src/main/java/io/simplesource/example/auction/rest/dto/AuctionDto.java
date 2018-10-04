@@ -1,7 +1,5 @@
 package io.simplesource.example.auction.rest.dto;
 
-import io.simplesource.example.auction.core.Money;
-
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 

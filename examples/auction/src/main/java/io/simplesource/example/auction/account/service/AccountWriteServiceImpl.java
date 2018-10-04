@@ -1,17 +1,19 @@
 package io.simplesource.example.auction.account.service;
 
 import io.simplesource.api.CommandAPI;
-import io.simplesource.data.Sequence;
+import io.simplesource.api.CommandError;
 import io.simplesource.data.FutureResult;
 import io.simplesource.data.NonEmptyList;
-import io.simplesource.data.Reason;
+import io.simplesource.data.Result;
+import io.simplesource.data.Sequence;
 import io.simplesource.example.auction.account.domain.*;
-import io.simplesource.example.auction.account.query.views.AccountView;
-import io.simplesource.example.auction.core.Money;
-import io.simplesource.example.auction.account.query.views.AccountTransactionViewKey;
-import io.simplesource.example.auction.account.query.views.AccountTransactionView;
+import io.simplesource.example.auction.account.domain.AccountError.Reason;
 import io.simplesource.example.auction.account.query.repository.AccountRepository;
 import io.simplesource.example.auction.account.query.repository.AccountTransactionRepository;
+import io.simplesource.example.auction.account.query.views.AccountTransactionView;
+import io.simplesource.example.auction.account.query.views.AccountTransactionViewKey;
+import io.simplesource.example.auction.account.query.views.AccountView;
+import io.simplesource.example.auction.core.Money;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -22,6 +24,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.Future;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -29,6 +33,8 @@ import static java.util.Objects.requireNonNull;
 
 public final class AccountWriteServiceImpl implements AccountWriteService {
     private Logger logger = LoggerFactory.getLogger(AccountWriteServiceImpl.class);
+    private static final Function<CommandError, AccountError> COMMAND_ERROR_TO_ACCOUNT_ERROR_FUNCTION =
+            ce -> AccountError.of(Reason.CommandError, ce.getReason() + ":" + ce.getMessage());
 
     private final AccountRepository accountRepository;
     private final CommandAPI<AccountKey, AccountCommand> accountCommandAPI;
@@ -41,18 +47,19 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
     }
 
     @Override
-    public FutureResult<CommandAPI.CommandError, Sequence> createAccount(AccountKey accountKey, Account account) {
+    public FutureResult<AccountError, Sequence> createAccount(AccountKey accountKey, Account account) {
         requireNonNull(account);
         requireNonNull(accountKey);
 
         Optional<AccountView> existingAccount = accountRepository
                 .findByAccountId(accountKey.id().toString());
 
-        List<Reason<CommandAPI.CommandError>> validationErrorReasons =
+        List<AccountError> validationErrorReasons =
                 Stream.of(
                         validUsername(account.username()),
                         validateFunds(account.funds(), "Initial fund can not be negative"),
-                        existingAccount.map(acc -> Reason.of(CommandAPI.CommandError.InternalError, "Account with same ID already exist")),
+                        existingAccount.map(acc -> AccountError.of(Reason.AccountIdAlreadyExist,
+                                String.format("Account ID %s already exist", acc.getId()))),
                         usernameNotTakenBefore(accountKey, account.username())
                 )
                         .filter(Optional::isPresent)
@@ -65,17 +72,14 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
 
         logger.info("Creating account with username {} and initial fund is {}", account.username(), account.funds());
         AccountCommand.CreateAccount command = new AccountCommand.CreateAccount(account.username(), account.funds());
-        return accountCommandAPI.publishAndQueryCommand(new CommandAPI.Request<>(accountKey, Sequence.first(), UUID.randomUUID(), command),
-                Duration.ofMinutes(1)).map(NonEmptyList::last);
-
+        return this.commandAndQueryAccount(accountKey, Sequence.first(), command, Duration.ofMinutes(1));
     }
 
-    //TODO Change the service to return AccountError and Sequence
     @Override
-    public FutureResult<CommandAPI.CommandError, UUID> updateAccount(AccountKey accountKey, String username) {
+    public FutureResult<AccountError, Sequence> updateAccount(AccountKey accountKey, String username) {
         Objects.requireNonNull(accountKey);
 
-        List<Reason<CommandAPI.CommandError>> validationErrorReasons = Stream.of(validUsername(username),
+        List<AccountError> validationErrorReasons = Stream.of(validUsername(username),
                 usernameNotTakenBefore(accountKey, username)).filter(Optional::isPresent)
                 .map(Optional::get).collect(Collectors.toList());
 
@@ -83,34 +87,29 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
             return FutureResult.fail(NonEmptyList.fromList(validationErrorReasons));
         }
 
-        return sendCommandForAccount(accountKey, new AccountCommand.UpdateAccount(username));
+        return commandAndQueryExistingAccount(accountKey, new AccountCommand.UpdateAccount(username), Duration.ofMinutes(1));
     }
 
     @Override
-    public FutureResult<CommandAPI.CommandError, Sequence> addFunds(@NotNull AccountKey accountKey, @NotNull Money funds) {
-        Optional<Reason<CommandAPI.CommandError>> invalidAmount = validateFunds(funds, "Cannot add a negative amount");
+    public FutureResult<AccountError, Sequence> addFunds(@NotNull AccountKey accountKey, @NotNull Money funds) {
+        Optional<AccountError> invalidAmount = validateFunds(funds, "Cannot add negative fund amount");
 
-        if (invalidAmount.isPresent())
-            return FutureResult.fail(invalidAmount.get());
-
-        FutureResult<CommandAPI.CommandError, UUID> commandResult = sendCommandForAccount(accountKey,
-                new AccountCommand.AddFunds(funds));
-
-        return commandResult.flatMap(v -> accountCommandAPI.queryCommandResult(v, Duration.ofMinutes(1)).map(NonEmptyList::last));
+        return invalidAmount.<FutureResult<AccountError, Sequence>>map(FutureResult::fail)
+                .orElse(commandAndQueryExistingAccount(accountKey, new AccountCommand.AddFunds(funds), Duration.ofMinutes(1)));
     }
 
     @Override
-    public FutureResult<CommandAPI.CommandError, Sequence> reserveFunds(@NotNull AccountKey accountKey, @NotNull ReservationId reservationId,
-                                                                        @NotNull Reservation reservation) {
-        Optional<AccountTransactionView> existingReservation = accountTransactionRepository
-                .findByTransactionKey(new AccountTransactionViewKey(accountKey, reservationId));
+    public FutureResult<AccountError, Sequence> reserveFunds(@NotNull AccountKey accountKey, @NotNull ReservationId reservationId,
+                                                             @NotNull Reservation reservation) {
+        Optional<AccountTransactionView> existingReservation = loadAccountReservation(accountKey, reservationId);
 
         Optional<AccountView> existingAccount = accountRepository
                 .findByAccountId(accountKey.id().toString());
 
-        List<Reason<CommandAPI.CommandError>> validationErrorReasons = Stream.of(
-                existingReservation.map(res -> Reason.of(CommandAPI.CommandError.InternalError, "Reservation with same ID already exist")),
-                existingAccount.flatMap(acc -> validateReserveFunds(reservation.amount())))
+        List<AccountError> validationErrorReasons = Stream.of(
+                existingReservation.map(res -> AccountError.of(Reason.ReservationIdAlreadyExist,
+                        String.format("Reservation with ID %s already exist", reservationId))),
+                existingAccount.flatMap(acc -> validateFunds(reservation.amount(), "Cannot reserve a negative amount")))
                 .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
                 .collect(Collectors.toList());
 
@@ -118,91 +117,106 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
             return FutureResult.fail(NonEmptyList.fromList(validationErrorReasons));
         }
 
-        FutureResult<CommandAPI.CommandError, UUID> commandResult = sendCommandForAccount(accountKey, new AccountCommand.ReserveFunds(reservationId, reservation.amount(), reservation.description()));
-        return commandResult.flatMap(v -> accountCommandAPI.queryCommandResult(v, Duration.ofMinutes(1)).map(NonEmptyList::last));
+        return commandAndQueryExistingAccount(accountKey, new AccountCommand.ReserveFunds(reservationId, reservation.amount(),
+                reservation.description()), Duration.ofMinutes(1));
     }
 
     @Override
-    public FutureResult<CommandAPI.CommandError, Sequence> cancelReservation(AccountKey accountKey, ReservationId reservationId) {
-        if (!reservationExists(accountKey, reservationId))
-            return FutureResult.fail(Reason.of(CommandAPI.CommandError.InternalError, "No reservation with the passed ID"));
+    public FutureResult<AccountError, Sequence> cancelReservation(AccountKey accountKey, ReservationId reservationId) {
+        AccountCommand.CancelReservation command = new AccountCommand.CancelReservation(reservationId);
 
-        FutureResult<CommandAPI.CommandError, UUID> commandResult = sendCommandForAccount(accountKey, new AccountCommand.CancelReservation(reservationId));
-        return commandResult.flatMap(v -> accountCommandAPI.queryCommandResult(v, Duration.ofMinutes(1)).map(NonEmptyList::last));
+        Optional<AccountError> mayBeInvalid = validateReservationForAccount(accountKey, reservationId);
+        return mayBeInvalid
+                .<FutureResult<AccountError, Sequence>>map(FutureResult::fail)
+                .orElse(commandAndQueryExistingAccount(accountKey, command, Duration.ofMinutes(1)));
     }
 
     @Override
-    public FutureResult<CommandAPI.CommandError, Sequence> confirmReservation(AccountKey accountKey, ReservationId reservationId, Money amount) {
-        if (!reservationExists(accountKey, reservationId))
-            return FutureResult.fail(Reason.of(CommandAPI.CommandError.InternalError, "No reservation with the passed ID"));
+    public FutureResult<AccountError, Sequence> confirmReservation(AccountKey accountKey, ReservationId reservationId, Money amount) {
+        AccountCommand.ConfirmReservation command = new AccountCommand.ConfirmReservation(reservationId, amount);
 
-        Optional<AccountView> existingAccount = accountRepository
-                .findByAccountId(accountKey.id().toString());
-
-        Optional<AccountTransactionView> existingReservation = accountTransactionRepository
-                .findByTransactionKey(new AccountTransactionViewKey(accountKey, reservationId));
-
-        Optional<Reason<CommandAPI.CommandError>> reservationMissing = (existingReservation.isPresent() ? Optional.empty() : Optional.of(
-                Reason.of(CommandAPI.CommandError.InternalError, "Reservation not present")));
-
-        List<Reason<CommandAPI.CommandError>> validationErrorReasons = Stream.of(
-                reservationMissing,
-                existingAccount.flatMap(acc -> validateReserveFunds(amount)))
-                .filter(inv -> inv.isPresent())
-                .map(Optional::get).collect(Collectors.toList());
+        List<AccountError> validationErrorReasons = Stream.of(
+                validateFunds(amount, "Confirmed transaction cannot have a negative amount")
+        )
+                .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
+                .collect(Collectors.toList());
 
         if (!validationErrorReasons.isEmpty()) {
             return FutureResult.fail(NonEmptyList.fromList(validationErrorReasons));
         }
 
-        FutureResult<CommandAPI.CommandError, UUID> commandResult = sendCommandForAccount(accountKey, new AccountCommand.ConfirmReservation(reservationId, amount));
-        return commandResult.flatMap(v -> accountCommandAPI.queryCommandResult(v, Duration.ofMinutes(1)).map(NonEmptyList::last));
+        Optional<AccountError> mayBeInvalid = validateReservationForAccount(accountKey, reservationId);
+        return mayBeInvalid
+                .<FutureResult<AccountError, Sequence>>map(FutureResult::fail)
+                .orElse(commandAndQueryExistingAccount(accountKey, command, Duration.ofMinutes(1)));
     }
 
-    private boolean reservationExists(AccountKey accountKey, ReservationId reservationId) {
-        Optional<AccountTransactionView> existingReservation = accountTransactionRepository
-                .findByTransactionKey(new AccountTransactionViewKey(accountKey, reservationId));
-
-        return existingReservation.isPresent();
-    }
-
-    private Optional<Reason<CommandAPI.CommandError>> validUsername(String username) {
-        if (StringUtils.isEmpty(username)) {
-            return Optional.of(Reason.of(CommandAPI.CommandError.CommandPublishError, "Username can not be empty"));
-        }
-
-        return Optional.empty();
-    }
-
-    private <C extends AccountCommand> FutureResult<CommandAPI.CommandError, UUID> sendCommandForAccount(AccountKey accountKey, C command) {
+    private <C extends AccountCommand> FutureResult<AccountError, Sequence> commandAndQueryExistingAccount(AccountKey accountKey,
+                                                                                                           C command,
+                                                                                                           Duration duration) {
         Optional<AccountView> maybeAccount = accountRepository.findByAccountId(accountKey.asString());
 
         return maybeAccount
-                .map(a -> accountCommandAPI.publishCommand(new CommandAPI.Request<>(accountKey,
-                        Sequence.position(a.getLastEventSequence()), UUID.randomUUID(), command)))
-                .orElse(FutureResult.fail(Reason.of(CommandAPI.CommandError.CommandPublishError, "Account does not exist")));
+                .map(a -> commandAndQueryAccount(accountKey, Sequence.position(a.getLastEventSequence()), command, duration))
+                .orElse(FutureResult.fail(AccountError.of(Reason.AccountDoesNotExist)));
     }
 
-    private Optional<Reason<CommandAPI.CommandError>> usernameNotTakenBefore(AccountKey accountKey, String username) {
-        List<AccountView> usersWithName = accountRepository.findOtherAccountsWithUsername(accountKey.asString(), username);
-        if (!usersWithName.isEmpty()) {
-            return Optional.of(Reason.of(CommandAPI.CommandError.CommandPublishError, "User name already exists"));
+    private <C extends AccountCommand> FutureResult<AccountError, Sequence> commandAndQueryAccount(AccountKey accountKey,
+                                                                                                   Sequence sequence, C command,
+                                                                                                   Duration duration) {
+
+        FutureResult<CommandError, Sequence> commandResult = accountCommandAPI.publishAndQueryCommand(new CommandAPI.Request<>(accountKey,
+                sequence, UUID.randomUUID(), command), duration).map(NonEmptyList::last);
+
+        Function<NonEmptyList<CommandError>, Result<AccountError, Sequence>> failureMapFunc =
+                ers -> Result.failure(ers.map(COMMAND_ERROR_TO_ACCOUNT_ERROR_FUNCTION));
+
+        Future<Result<AccountError, Sequence>> future = commandResult.fold(failureMapFunc, Result::success);
+
+        return FutureResult.ofFutureResult(future, exp -> AccountError.of(Reason.UnknownError, exp.getMessage()));
+    }
+
+    private Optional<AccountError> validateReservationForAccount(AccountKey accountKey, ReservationId reservationId) {
+        Optional<AccountView> mayBeAccount = accountRepository.findByAccountId(accountKey.id().toString());
+        if (!mayBeAccount.isPresent()) {
+            return Optional.of(AccountError.of(Reason.AccountDoesNotExist));
+        }
+
+        Optional<AccountTransactionView> accountReservation = loadAccountReservation(accountKey, reservationId);
+        if (!accountReservation.isPresent())
+            return Optional.of(AccountError.of(Reason.ReservationDoesNotExist,
+                    String.format("Reservation with ID %s does not exist for account with ID %s", reservationId, accountKey)));
+
+        if (!accountReservation.filter(v -> v.getStatus() == Reservation.Status.DRAFT).isPresent()) {
+            return Optional.of(AccountError.of(Reason.InvalidData, "Account reservation is not in draft state"));
         }
 
         return Optional.empty();
     }
 
-    private Optional<Reason<CommandAPI.CommandError>> validateFunds(Money funds, String msg) {
-        if (funds == null || funds.isNegativeAmount())
-            return Optional.of(Reason.of(CommandAPI.CommandError.CommandPublishError, msg));
+    private Optional<AccountError> validUsername(String username) {
+        if (StringUtils.isEmpty(username)) {
+            return Optional.of(AccountError.of(Reason.InvalidData, "Username can not be empty"));
+        }
 
         return Optional.empty();
     }
 
-    private Optional<Reason<CommandAPI.CommandError>> validateReserveFunds(Money funds) {
+    private Optional<AccountError> usernameNotTakenBefore(AccountKey accountKey, String username) {
+        List<AccountView> usersWithName = accountRepository.findOtherAccountsWithUsername(accountKey.asString(), username);
+        return usersWithName.stream().findAny()
+                .map(v -> AccountError.of(Reason.UserNameIsNotAvailable, String.format("User name %s already exists", username)));
+    }
+
+    private Optional<AccountError> validateFunds(Money funds, String msg) {
         if (funds == null || funds.isNegativeAmount())
-            return Optional.of(Reason.of(CommandAPI.CommandError.CommandPublishError, "Cannot reserve a negative amount"));
+            return Optional.of(AccountError.of(Reason.InvalidData, msg));
 
         return Optional.empty();
+    }
+
+    private Optional<AccountTransactionView> loadAccountReservation(AccountKey accountKey, ReservationId reservationId) {
+        return accountTransactionRepository
+                .findByTransactionKey(new AccountTransactionViewKey(accountKey, reservationId));
     }
 }

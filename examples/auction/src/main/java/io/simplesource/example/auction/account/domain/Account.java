@@ -3,8 +3,8 @@ package io.simplesource.example.auction.account.domain;
 import io.simplesource.example.auction.core.Money;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
 import lombok.NonNull;
+import lombok.Value;
 
 import java.util.Collections;
 import java.util.List;

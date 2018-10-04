@@ -2,6 +2,7 @@ package io.simplesource.example.auction.account.domain;
 
 import lombok.ToString;
 import lombok.Value;
+
 import java.util.UUID;
 
 @Value

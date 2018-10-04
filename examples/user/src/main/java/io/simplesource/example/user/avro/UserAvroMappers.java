@@ -1,10 +1,10 @@
 package io.simplesource.example.user.avro;
 
 import io.simplesource.example.user.avro.api.*;
+import io.simplesource.example.user.domain.User;
 import io.simplesource.example.user.domain.UserCommand;
 import io.simplesource.example.user.domain.UserEvent;
 import io.simplesource.example.user.domain.UserKey;
-import io.simplesource.example.user.domain.User;
 import io.simplesource.kafka.serialization.util.GenericMapper;
 import org.apache.avro.generic.GenericRecord;
 

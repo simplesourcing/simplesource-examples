@@ -1,10 +1,10 @@
 package io.simplesource.example.user;
 
 import io.simplesource.api.InitialValue;
+import io.simplesource.example.user.domain.User;
 import io.simplesource.example.user.domain.UserCommand;
 import io.simplesource.example.user.domain.UserEvent;
 import io.simplesource.example.user.domain.UserKey;
-import io.simplesource.example.user.domain.User;
 import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.api.ResourceNamingStrategy;
 import io.simplesource.kafka.dsl.AggregateBuilder;
@@ -23,7 +23,7 @@ public final class UserAggregate {
     ) {
         return AggregateBuilder.<UserKey, UserCommand, UserEvent, Optional<User>>newBuilder()
                 .withName(name)
-                .withDomainSerializer(aggregateSerdes)
+                .withSerdes(aggregateSerdes)
                 .withResourceNamingStrategy(resourceNamingStrategy)
                 .withInitialValue(initialValue)
                 .withAggregator(UserEvent.getAggregator())
