@@ -8,6 +8,7 @@ import io.simplesource.example.user.domain.User;
 import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.api.ResourceNamingStrategy;
 import io.simplesource.kafka.dsl.AggregateBuilder;
+import io.simplesource.kafka.dsl.InvalidSequenceStrategy;
 import io.simplesource.kafka.spec.AggregateSpec;
 
 import java.util.Optional;
@@ -23,11 +24,12 @@ public final class UserAggregate {
     ) {
         return AggregateBuilder.<UserKey, UserCommand, UserEvent, Optional<User>>newBuilder()
                 .withName(name)
-                .withDomainSerializer(aggregateSerdes)
+                .withSerdes(aggregateSerdes)
                 .withResourceNamingStrategy(resourceNamingStrategy)
                 .withInitialValue(initialValue)
                 .withAggregator(UserEvent.getAggregator())
                 .withCommandHandler(UserCommand.getCommandHandler())
+                .withCommandSequenceStrategy(InvalidSequenceStrategy.Strict)
                 .build();
     }
 
