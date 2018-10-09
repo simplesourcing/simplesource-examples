@@ -1,16 +1,19 @@
 package io.simplesource.example.auction.rest;
 
 
-import io.simplesource.example.auction.account.service.AccountWriteService;
-import io.simplesource.example.auction.account.service.AccountReadService;
-import io.simplesource.example.auction.account.query.views.AccountView;
-import io.simplesource.example.auction.account.query.views.AccountTransactionView;
 import io.simplesource.example.auction.account.query.repository.AccountRepository;
+import io.simplesource.example.auction.account.query.views.AccountTransactionView;
+import io.simplesource.example.auction.account.query.views.AccountView;
+import io.simplesource.example.auction.account.service.AccountReadService;
+import io.simplesource.example.auction.account.service.AccountWriteService;
 import io.simplesource.example.auction.rest.dto.AccountDetailsDto;
 import io.simplesource.example.auction.rest.dtomappers.AccountEntityToDtoMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;

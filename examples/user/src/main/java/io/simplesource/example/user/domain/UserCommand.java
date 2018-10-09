@@ -1,6 +1,6 @@
 package io.simplesource.example.user.domain;
 
-import io.simplesource.api.CommandAPI;
+import io.simplesource.api.CommandError;
 import io.simplesource.api.CommandHandler;
 import io.simplesource.data.NonEmptyList;
 import io.simplesource.data.Result;
@@ -9,7 +9,6 @@ import lombok.Value;
 
 import java.util.Optional;
 
-import static io.simplesource.api.CommandAPI.CommandError.InvalidCommand;
 import static io.simplesource.data.NonEmptyList.of;
 
 public interface UserCommand {
@@ -46,55 +45,50 @@ public interface UserCommand {
     }
 
     static CommandHandler<UserKey, InsertUser, UserEvent, Optional<User>> doInsertUser() {
-        return CommandHandler.ifSeq(
-                (userId, expectedSeq, currentSeq, currentAggregate, command) -> currentAggregate
-                        .map(d -> failure("User already created: " + userId.id()))
-                        .orElse(success(new UserEvent.UserInserted(
-                                command.firstName(),
-                                command.lastName()))));
+        return (userId, currentAggregate, command) -> currentAggregate
+                .map(d -> failure("User already created: " + userId.id()))
+                .orElse(success(new UserEvent.UserInserted(
+                        command.firstName(),
+                        command.lastName())));
     }
 
     static CommandHandler<UserKey, DeleteUser, UserEvent, Optional<User>> doDeleteUser() {
-        return CommandHandler.ifSeq(
-                (userId, expectedSeq, currentSeq, currentAggregate, command) -> currentAggregate
-                        .map(d -> success(new UserEvent.UserDeleted()))
-                        .orElse(failure("Attempted to delete non-existent user: " + userId.id())));
+        return (userId, currentAggregate, command) -> currentAggregate
+                .map(d -> success(new UserEvent.UserDeleted()))
+                .orElse(failure("Attempted to delete non-existent user: " + userId.id()));
     }
 
     static CommandHandler<UserKey, UpdateYearOfBirth, UserEvent, Optional<User>> doUpdateYearOfBirth() {
-        return CommandHandler.ifSeq(
-                (userId, expectedSeq, currentSeq, currentAggregate, command) -> currentAggregate
-                        .map(d -> success(
-                                new UserEvent.YearOfBirthUpdated(command.yearOfBirth())))
-                        .orElse(failure("Attempted to update non-existent user: " + userId.id())));
+        return (userId, currentAggregate, command) -> currentAggregate
+                .map(d -> success(
+                        new UserEvent.YearOfBirthUpdated(command.yearOfBirth())))
+                .orElse(failure("Attempted to update non-existent user: " + userId.id()));
     }
 
     static CommandHandler<UserKey, UpdateName, UserEvent, Optional<User>> doUpdateName() {
-        return CommandHandler.ifSeq(
-                (userId, expectedSeq, currentSeq, currentAggregate, command) -> currentAggregate
-                        .map(d -> success(
-                                new UserEvent.FirstNameUpdated(command.firstName()),
-                                new UserEvent.LastNameUpdated(command.lastName())))
-                        .orElse(failure("Attempted to update non-existent user: " + userId.id())));
+        return (userId, currentAggregate, command) -> currentAggregate
+                .map(d -> success(
+                        new UserEvent.FirstNameUpdated(command.firstName()),
+                        new UserEvent.LastNameUpdated(command.lastName())))
+                .orElse(failure("Attempted to update non-existent user: " + userId.id()));
     }
 
     static CommandHandler<UserKey, BuggyCommand, UserEvent, Optional<User>> doBuggyCommand() {
-        return CommandHandler.ifSeq(
-                (userId, expectedSeq, currentSeq, currentAggregate, command) -> {
-                    if (command.throwInCommandHandler()) {
-                        throw new RuntimeException("Buggy bug");
-                    } else {
-                        return success(new UserEvent.BuggyEvent());
-                    }
-                });
+        return (userId, currentAggregate, command) -> {
+            if (command.throwInCommandHandler()) {
+                throw new RuntimeException("Buggy bug");
+            } else {
+                return success(new UserEvent.BuggyEvent());
+            }
+        };
     }
 
-    static Result<CommandAPI.CommandError, NonEmptyList<UserEvent>> failure(final String message) {
-        return Result.failure(InvalidCommand, message);
+    static Result<CommandError, NonEmptyList<UserEvent>> failure(final String message) {
+        return Result.failure(CommandError.of(CommandError.Reason.InvalidCommand, message));
     }
 
     @SafeVarargs
-    static <Event extends UserEvent> Result<CommandAPI.CommandError, NonEmptyList<UserEvent>> success(final Event event, final Event... events) {
+    static <Event extends UserEvent> Result<CommandError, NonEmptyList<UserEvent>> success(final Event event, final Event... events) {
         return Result.success(of(event, events));
     }
 

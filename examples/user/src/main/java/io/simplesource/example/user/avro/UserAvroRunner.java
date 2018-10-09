@@ -2,15 +2,15 @@ package io.simplesource.example.user.avro;
 
 import io.simplesource.api.CommandAPI;
 import io.simplesource.api.CommandAPISet;
-import io.simplesource.api.CommandAPI.CommandError;
-import io.simplesource.data.Sequence;
+import io.simplesource.api.CommandError;
 import io.simplesource.data.NonEmptyList;
 import io.simplesource.data.Result;
+import io.simplesource.data.Sequence;
 import io.simplesource.example.user.UserAggregate;
+import io.simplesource.example.user.domain.User;
 import io.simplesource.example.user.domain.UserCommand;
 import io.simplesource.example.user.domain.UserEvent;
 import io.simplesource.example.user.domain.UserKey;
-import io.simplesource.example.user.domain.User;
 import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.dsl.AggregateSetBuilder;
 import io.simplesource.kafka.internal.streams.PrefixResourceNamingStrategy;
@@ -60,7 +60,7 @@ public final class UserAvroRunner {
 
         logger.info("Started publishing commands");
         final Result<CommandError, NonEmptyList<Sequence>> result =
-            submitCommands(api).unsafePerform(e -> CommandError.InternalError);
+            submitCommands(api).unsafePerform(e -> CommandError.of(CommandError.Reason.InternalError, e));
         logger.info("Result of commands {}", result);
         logger.info("All commands published");
     }

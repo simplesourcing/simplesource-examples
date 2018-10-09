@@ -1,7 +1,10 @@
 package io.simplesource.example.auction.account.domain;
 
 import io.simplesource.example.auction.core.Money;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Value;
 
 @Value
 @Builder(toBuilder = true)

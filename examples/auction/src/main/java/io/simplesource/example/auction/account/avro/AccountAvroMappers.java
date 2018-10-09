@@ -1,9 +1,10 @@
 package io.simplesource.example.auction.account.avro;
 
-import io.simplesource.example.auction.account.domain.*;
+import io.simplesource.example.auction.account.domain.AccountCommand;
 import io.simplesource.example.auction.account.domain.AccountEvents;
+import io.simplesource.example.auction.account.domain.AccountKey;
+import io.simplesource.example.auction.account.domain.ReservationId;
 import io.simplesource.example.auction.account.wire.*;
-import io.simplesource.example.auction.account.wire.Account;
 import io.simplesource.example.auction.core.Money;
 import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.serialization.avro.AvroAggregateSerdes;
@@ -68,8 +69,7 @@ public final class AccountAvroMappers {
         return io.simplesource.example.auction.account.domain.Reservation.Status.valueOf(status);
     }
 
-    //TODO make this private method
-    public static GenericMapper<AccountEvents.AccountEvent, GenericRecord> buildEventMapper() {
+    private static GenericMapper<AccountEvents.AccountEvent, GenericRecord> buildEventMapper() {
         DomainMapperBuilder builder = new DomainMapperBuilder(new DomainMapperRegistry());
 
         builder.mapperFor(AccountEvents.AccountCreated.class, AccountCreated.class)

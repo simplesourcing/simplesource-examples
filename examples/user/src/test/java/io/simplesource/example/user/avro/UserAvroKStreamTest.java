@@ -1,18 +1,19 @@
 package io.simplesource.example.user.avro;
 
-import io.simplesource.data.Sequence;
+import io.simplesource.api.CommandError;
 import io.simplesource.data.NonEmptyList;
+import io.simplesource.data.Sequence;
 import io.simplesource.example.user.UserAggregate;
+import io.simplesource.example.user.domain.User;
 import io.simplesource.example.user.domain.UserCommand;
 import io.simplesource.example.user.domain.UserEvent;
 import io.simplesource.example.user.domain.UserKey;
-import io.simplesource.example.user.domain.User;
 import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.dsl.KafkaConfig;
-import io.simplesource.kafka.model.ValueWithSequence;
 import io.simplesource.kafka.internal.streams.AggregateTestDriver;
 import io.simplesource.kafka.internal.streams.AggregateTestHelper;
 import io.simplesource.kafka.internal.streams.PrefixResourceNamingStrategy;
+import io.simplesource.kafka.model.ValueWithSequence;
 import io.simplesource.kafka.serialization.avro.AvroAggregateSerdes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +21,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
-import static io.simplesource.api.CommandAPI.CommandError.*;
 import static io.simplesource.example.user.avro.UserAvroMappers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -31,25 +31,25 @@ class UserAvroKStreamTest {
     @BeforeEach
     public void setup() {
         final AggregateSerdes<UserKey, UserCommand, UserEvent, Optional<User>> avroAggregateSerdes =
-            new AvroAggregateSerdes<>(
-                aggregateMapper, eventMapper, commandMapper, keyMapper,
-                "http://mock-registry:8081",
-                true,
-                io.simplesource.example.user.avro.api.User.SCHEMA$);
+                new AvroAggregateSerdes<>(
+                        aggregateMapper, eventMapper, commandMapper, keyMapper,
+                        "http://mock-registry:8081",
+                        true,
+                        io.simplesource.example.user.avro.api.User.SCHEMA$);
 
         testAPI = new AggregateTestDriver<>(
-            UserAggregate.createSpec(
-                "user",
-                    avroAggregateSerdes,
-                new PrefixResourceNamingStrategy("user_mapped_avro_"),
-                k -> Optional.empty()
-            ),
+                UserAggregate.createSpec(
+                        "user",
+                        avroAggregateSerdes,
+                        new PrefixResourceNamingStrategy("user_mapped_avro_"),
+                        k -> Optional.empty()
+                ),
                 new KafkaConfig.Builder()
-                    .withKafkaApplicationId("testApp")
-                    .withApplicationServer("server:8888")
-                    .withKafkaBootstrap("0.0.0.0:9092")
-                    .withExactlyOnce()
-                    .build());
+                        .withKafkaApplicationId("testApp")
+                        .withApplicationServer("server:8888")
+                        .withKafkaBootstrap("0.0.0.0:9092")
+                        .withExactlyOnce()
+                        .build());
         testHelper = new AggregateTestHelper<>(testAPI);
     }
 
@@ -70,33 +70,33 @@ class UserAvroKStreamTest {
         final int yearOfBirth = 1991;
 
         testHelper.publishCommand(
-            key,
-            Sequence.first(),
-            new UserCommand.InsertUser(firstName, lastName))
-            .expecting(
-                NonEmptyList.of(new UserEvent.UserInserted(firstName, lastName)),
-                Optional.of(new User(firstName, lastName, null))
-            )
-            .thenPublish(
-                new UserCommand.UpdateName(updatedFirstName, updatedLastName))
-            .expecting(
-                NonEmptyList.of(
-                    new UserEvent.FirstNameUpdated(updatedFirstName),
-                    new UserEvent.LastNameUpdated(updatedLastName)),
-                Optional.of(new User(updatedFirstName, updatedLastName, null))
-            )
-            .thenPublish(
-                new UserCommand.UpdateYearOfBirth(yearOfBirth))
-            .expecting(
-                NonEmptyList.of(new UserEvent.YearOfBirthUpdated(yearOfBirth)),
-                Optional.of(new User(updatedFirstName, updatedLastName, yearOfBirth))
-            )
-            .thenPublish(
-                new UserCommand.DeleteUser())
-            .expecting(
-                NonEmptyList.of(new UserEvent.UserDeleted()),
-                Optional.empty()
-            );
+                key,
+                Sequence.first(),
+                new UserCommand.InsertUser(firstName, lastName))
+                .expecting(
+                        NonEmptyList.of(new UserEvent.UserInserted(firstName, lastName)),
+                        Optional.of(new User(firstName, lastName, null))
+                )
+                .thenPublish(
+                        new UserCommand.UpdateName(updatedFirstName, updatedLastName))
+                .expecting(
+                        NonEmptyList.of(
+                                new UserEvent.FirstNameUpdated(updatedFirstName),
+                                new UserEvent.LastNameUpdated(updatedLastName)),
+                        Optional.of(new User(updatedFirstName, updatedLastName, null))
+                )
+                .thenPublish(
+                        new UserCommand.UpdateYearOfBirth(yearOfBirth))
+                .expecting(
+                        NonEmptyList.of(new UserEvent.YearOfBirthUpdated(yearOfBirth)),
+                        Optional.of(new User(updatedFirstName, updatedLastName, yearOfBirth))
+                )
+                .thenPublish(
+                        new UserCommand.DeleteUser())
+                .expecting(
+                        NonEmptyList.of(new UserEvent.UserDeleted()),
+                        Optional.empty()
+                );
 
     }
 
@@ -107,10 +107,10 @@ class UserAvroKStreamTest {
         final String lastName = "Joyce";
 
         testHelper.publishCommand(
-            id,
-            Sequence.first(),
-            new UserCommand.UpdateName(firstName, lastName))
-            .expectingFailure(NonEmptyList.of(InvalidCommand));
+                id,
+                Sequence.first(),
+                new UserCommand.UpdateName(firstName, lastName))
+                .expectingFailure(NonEmptyList.of(CommandError.Reason.InvalidCommand));
     }
 
     @Test
@@ -120,10 +120,10 @@ class UserAvroKStreamTest {
         final String lastName = "McCormack";
 
         testHelper.publishCommand(
-            id,
-            Sequence.position(666L),
-            new UserCommand.InsertUser(firstName, lastName))
-            .expectingFailure(NonEmptyList.of(InvalidReadSequence));
+                id,
+                Sequence.position(666L),
+                new UserCommand.InsertUser(firstName, lastName))
+                .expectingFailure(NonEmptyList.of(CommandError.Reason.InvalidReadSequence));
     }
 
     @Test
@@ -135,16 +135,16 @@ class UserAvroKStreamTest {
         final String updatedLastName = "Rented";
 
         testHelper.publishCommand(
-            id,
-            Sequence.first(),
-            new UserCommand.InsertUser(firstName, lastName))
-            .expecting(
-                NonEmptyList.of(new UserEvent.UserInserted(firstName, lastName)),
-                Optional.of(new User(firstName, lastName, null))
-            )
-            .thenPublish(update ->
-                new ValueWithSequence<>(new UserCommand.UpdateName(updatedFirstName, updatedLastName), Sequence.first()))
-            .expectingFailure(NonEmptyList.of(InvalidReadSequence));
+                id,
+                Sequence.first(),
+                new UserCommand.InsertUser(firstName, lastName))
+                .expecting(
+                        NonEmptyList.of(new UserEvent.UserInserted(firstName, lastName)),
+                        Optional.of(new User(firstName, lastName, null))
+                )
+                .thenPublish(update ->
+                        new ValueWithSequence<>(new UserCommand.UpdateName(updatedFirstName, updatedLastName), Sequence.first()))
+                .expectingFailure(NonEmptyList.of(CommandError.Reason.InvalidReadSequence));
     }
 
     @Test
@@ -152,10 +152,10 @@ class UserAvroKStreamTest {
         final UserKey id = new UserKey("myuser");
 
         testHelper.publishCommand(
-            id,
-            Sequence.first(),
-            new UserCommand.UnhandledCommand())
-            .expectingFailure(NonEmptyList.of(InvalidCommand));
+                id,
+                Sequence.first(),
+                new UserCommand.UnhandledCommand())
+                .expectingFailure(NonEmptyList.of(CommandError.Reason.InvalidCommand));
     }
 
     @Test
@@ -163,10 +163,10 @@ class UserAvroKStreamTest {
         final UserKey id = new UserKey("myuser");
 
         testHelper.publishCommand(
-            id,
-            Sequence.first(),
-            new UserCommand.BuggyCommand(true, false))
-            .expectingFailure(NonEmptyList.of(CommandHandlerFailed));
+                id,
+                Sequence.first(),
+                new UserCommand.BuggyCommand(true, false))
+                .expectingFailure(NonEmptyList.of(CommandError.Reason.CommandHandlerFailed));
     }
 
     @Test
@@ -174,11 +174,11 @@ class UserAvroKStreamTest {
         final UserKey id = new UserKey("myuser");
 
         assertThrows(UnsupportedOperationException.class, () ->
-            testHelper.publishCommand(
-                id,
-                Sequence.first(),
-                new UserCommand.BuggyCommand(false, true))
-                .expectingFailure(NonEmptyList.of(InvalidCommand))
+                testHelper.publishCommand(
+                        id,
+                        Sequence.first(),
+                        new UserCommand.BuggyCommand(false, true))
+                        .expectingFailure(NonEmptyList.of(CommandError.Reason.InvalidCommand))
         );
     }
 

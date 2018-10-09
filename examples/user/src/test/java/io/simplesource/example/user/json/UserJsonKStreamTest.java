@@ -1,18 +1,19 @@
 package io.simplesource.example.user.json;
 
-import io.simplesource.data.Sequence;
+import io.simplesource.api.CommandError;
 import io.simplesource.data.NonEmptyList;
+import io.simplesource.data.Sequence;
 import io.simplesource.example.user.UserAggregate;
+import io.simplesource.example.user.domain.User;
 import io.simplesource.example.user.domain.UserCommand;
 import io.simplesource.example.user.domain.UserEvent;
 import io.simplesource.example.user.domain.UserKey;
-import io.simplesource.example.user.domain.User;
 import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.dsl.KafkaConfig;
-import io.simplesource.kafka.model.ValueWithSequence;
 import io.simplesource.kafka.internal.streams.AggregateTestDriver;
 import io.simplesource.kafka.internal.streams.AggregateTestHelper;
 import io.simplesource.kafka.internal.streams.PrefixResourceNamingStrategy;
+import io.simplesource.kafka.model.ValueWithSequence;
 import io.simplesource.kafka.serialization.json.JsonAggregateSerdes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +21,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
-import static io.simplesource.api.CommandAPI.CommandError.*;
 import static io.simplesource.kafka.serialization.json.JsonGenericMapper.jsonDomainMapper;
 import static io.simplesource.kafka.serialization.json.JsonOptionalGenericMapper.jsonOptionalDomainMapper;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -111,7 +111,7 @@ class UserJsonKStreamTest {
             id,
             Sequence.first(),
             new UserCommand.UpdateName(firstName, lastName))
-            .expectingFailure(NonEmptyList.of(InvalidCommand));
+            .expectingFailure(NonEmptyList.of(CommandError.Reason.InvalidCommand));
     }
 
     @Test
@@ -124,7 +124,7 @@ class UserJsonKStreamTest {
             id,
             Sequence.position(666L),
             new UserCommand.InsertUser(firstName, lastName))
-            .expectingFailure(NonEmptyList.of(InvalidReadSequence));
+            .expectingFailure(NonEmptyList.of(CommandError.Reason.InvalidReadSequence));
     }
 
     @Test
@@ -145,7 +145,7 @@ class UserJsonKStreamTest {
             )
             .thenPublish(update ->
                 new ValueWithSequence<>(new UserCommand.UpdateName(updatedFirstName, updatedLastName), Sequence.first()))
-            .expectingFailure(NonEmptyList.of(InvalidReadSequence));
+            .expectingFailure(NonEmptyList.of(CommandError.Reason.InvalidReadSequence));
     }
 
     @Test
@@ -156,7 +156,7 @@ class UserJsonKStreamTest {
             id,
             Sequence.first(),
             new UserCommand.UnhandledCommand())
-            .expectingFailure(NonEmptyList.of(InvalidCommand));
+            .expectingFailure(NonEmptyList.of(CommandError.Reason.InvalidCommand));
     }
 
     @Test
@@ -167,7 +167,7 @@ class UserJsonKStreamTest {
             id,
             Sequence.first(),
             new UserCommand.BuggyCommand(true, false))
-            .expectingFailure(NonEmptyList.of(CommandHandlerFailed));
+            .expectingFailure(NonEmptyList.of(CommandError.Reason.CommandHandlerFailed));
     }
 
     @Test
@@ -179,7 +179,7 @@ class UserJsonKStreamTest {
                 id,
                 Sequence.first(),
                 new UserCommand.BuggyCommand(false, true))
-                .expectingFailure(NonEmptyList.of(InvalidCommand))
+                .expectingFailure(NonEmptyList.of(CommandError.Reason.InvalidCommand))
         );
     }
 
