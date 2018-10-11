@@ -24,11 +24,9 @@ def valid_response(response):
     valid_responsees = {201: "Connector configured successfully", 409: "Connector already exists"}
     return valid_responsees.get(response.status_code)
 
-
 def configure_all():
     for config in AUCTION_EXAMPLE_CONNECT_INSTANCES:
         configure_connect_instance(config)
-
 
 if __name__ == '__main__':
     configure_all()

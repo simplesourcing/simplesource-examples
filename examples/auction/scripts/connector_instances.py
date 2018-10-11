@@ -1,45 +1,51 @@
-ACCOUNT_TOPIC_NAME = "auction_account_projection"
-ACCOUNT_CONNECT_INSTANCE_NAME = "Auction-Accounts-MongoDb-Sink"
-
-ACCOUNT_TRANSACTIONS_TOPIC_NAME = "auction_account_transactions_projection"
-ACCOUNT_TRANSACTIONS_CONNECT_INSTANCE_NAME = "Auction-Account-Transactions-MongoDb-Sink"
-
-AUCTION_TOPIC_NAME = "auction_auction_projection"
-AUCTION_CONNECT_INSTANCE_NAME = "Auction-Auctions-MongoDb-Sink"
+MONGODB_ACCOUNT_INSTANCE_NAME = "Auction-Accounts-MongoDb-Sink"
+MONGODB_ACCOUNT_TRANSACTIONS_INSTANCE_NAME = "Auction-Account-Transactions-MongoDb-Sink"
+ELASTICSEARCH_ACCOUNT_INSTANCE_NAME = "Auction-Accounts-Elasticsearch-Sink"
 
 topic_connect_parameters = {
-    ACCOUNT_TOPIC_NAME: {
+    MONGODB_ACCOUNT_INSTANCE_NAME: {
+        "connector.class": "at.grahsl.kafka.connect.mongodb.MongoDbSinkConnector",
         "mongodb.collection": "auction_account",
-        "name": ACCOUNT_CONNECT_INSTANCE_NAME,
         "mongodb.document.id.strategy": "at.grahsl.kafka.connect.mongodb.processor.id.strategy.ProvidedInKeyStrategy",
+        "topics": "auction_account_projection",
+        "mongodb.connection.uri": "mongodb://mongo:27017/auction_example?w=1&journal=true",
+        "mongodb.max.num.retries": "5",
+        "mongodb.delete.on.null.values": "true",
         "transforms": "RenameId",
         "transforms.RenameId.type": "org.apache.kafka.connect.transforms.ReplaceField$Key",
-        "transforms.RenameId.renames": "id:_id"
+        "transforms.RenameId.renames": "id:_id",
     },
-    ACCOUNT_TRANSACTIONS_TOPIC_NAME: {
+    MONGODB_ACCOUNT_TRANSACTIONS_INSTANCE_NAME: {
         "mongodb.collection": "auction_account_transactions",
-        "name": ACCOUNT_TRANSACTIONS_CONNECT_INSTANCE_NAME,
         "mongodb.document.id.strategy": "at.grahsl.kafka.connect.mongodb.processor.id.strategy.FullKeyStrategy",
+        "topics": "auction_account_transactions_projection",
+        "mongodb.delete.on.null.values": "true",
+        "connector.class": "at.grahsl.kafka.connect.mongodb.MongoDbSinkConnector",
+        "mongodb.connection.uri": "mongodb://mongo:27017/auction_example?w=1&journal=true",
+        "mongodb.max.num.retries": "5"
+    },
+    ELASTICSEARCH_ACCOUNT_INSTANCE_NAME: {
+        "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
+        "connection.url": "http://elasticsearch:9200",
+        "topics": "auction_account_projection",
+        "type.name": "simplesource-example-account",
+        "transforms": "ExtractIdFromKey",
+        "transforms.ExtractIdFromKey.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
+        "transforms.ExtractIdFromKey.field": "id"
     }
 }
 
 
-def build_connect_config_dict(topic_name, custom_config):
-    connect_instance_name = custom_config.get("name")
+def build_connect_config_dict(connect_instance_name, custom_config):
     connect_config = {
         "name": connect_instance_name,
         "config": {
-            "connector.class": "at.grahsl.kafka.connect.mongodb.MongoDbSinkConnector",
             "name": connect_instance_name,
             "connector-name": connect_instance_name,
             "key.converter": "io.confluent.connect.avro.AvroConverter",
-            "topics": topic_name,
             "value.converter": "io.confluent.connect.avro.AvroConverter",
-            "mongodb.connection.uri": "mongodb://mongo:27017/auction_example?w=1&journal=true",
-            "mongodb.max.num.retries": "5",
             "key.converter.schema.registry.url": "http://schema_registry:8081",
-            "value.converter.schema.registry.url": "http://schema_registry:8081",
-            "mongodb.delete.on.null.values" : "true"
+            "value.converter.schema.registry.url": "http://schema_registry:8081"
         }
     }
     connect_config.get("config").update(custom_config)
