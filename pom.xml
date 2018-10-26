@@ -18,7 +18,7 @@
         <junit.jupiter.version>5.0.2</junit.jupiter.version>
         <junit.platform.version>1.0.2</junit.platform.version>
         <quicktheories.version>0.25</quicktheories.version>
-        <simplesource.version>0.1.5-SNAPSHOT</simplesource.version>
+        <simplesource.version>0.1.6-SNAPSHOT</simplesource.version>
     </properties>
 
     <modules>
