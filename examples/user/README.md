@@ -24,6 +24,5 @@ The following table summarises the included scenarios.
 
 | Serialization format | Domain format | Runner | Test |
 |----|----|----|----|
-| Avro | Specific generated Avro classes | `UserAvroRunner`| `UserAvroKStreamTest` |
-| Avro | Custom POJO classes | `UserMappedAvroRunner`| `UserMappedAvroKStreamTest` |
-| JSON | Custom POJO classes | `UserMappedJsonRunner`| `UserMappedJsonKStreamTest` |
+| Avro | Custom POJO classes | `UserAvroRunner`| `UserAvroKStreamTest` |
+| JSON | Custom POJO classes | `UserJsonRunner`| `UserJsonKStreamTest` |

@@ -64,5 +64,4 @@ public final class UserAvroRunner {
         logger.info("Result of commands {}", result);
         logger.info("All commands published");
     }
-
 }

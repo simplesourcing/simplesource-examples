@@ -30,8 +30,8 @@ import static io.simplesource.kafka.serialization.json.JsonOptionalGenericMapper
  *
  * @see UserAggregate
  */
-public final class UserMappedJsonRunner {
-    private static final Logger logger = LoggerFactory.getLogger(UserMappedJsonRunner.class);
+public final class UserJsonRunner {
+    private static final Logger logger = LoggerFactory.getLogger(UserJsonRunner.class);
 
     public static void main(final String[] args) {
         final AggregateSerdes<UserKey, UserCommand, UserEvent, Optional<User>> aggregateSerdes =
