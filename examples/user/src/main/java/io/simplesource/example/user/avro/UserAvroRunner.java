@@ -36,7 +36,7 @@ public final class UserAvroRunner {
     public static void main(final String[] args) {
         final AggregateSerdes<UserKey, UserCommand, UserEvent, Optional<User>> avroAggregateSerdes =
             new AvroAggregateSerdes<>(
-                aggregateMapper, eventMapper, commandMapper, keyMapper,
+                    keyMapper, commandMapper, eventMapper, aggregateMapper,
                 "http://localhost:8081",
                 false,
                 io.simplesource.example.user.avro.api.User.SCHEMA$);

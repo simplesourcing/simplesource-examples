@@ -37,11 +37,10 @@ public final class UserJsonRunner {
     public static void main(final String[] args) {
         final AggregateSerdes<UserKey, UserCommand, UserEvent, Optional<User>> aggregateSerdes =
             new JsonAggregateSerdes<>(
-                jsonOptionalDomainMapper(),
                 jsonDomainMapper(),
                 jsonDomainMapper(),
-                jsonDomainMapper()
-            );
+                jsonDomainMapper(),
+                jsonOptionalDomainMapper());
 
         final String aggregateName = "example-user";
         AggregateSetSpec aggregateSetSpec = new AggregateSetBuilder()

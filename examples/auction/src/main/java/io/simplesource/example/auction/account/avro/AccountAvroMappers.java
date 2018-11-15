@@ -24,7 +24,7 @@ public final class AccountAvroMappers {
     public static AggregateSerdes<AccountKey, AccountCommand, AccountEvents.AccountEvent, Optional<io.simplesource.example.auction.account.domain.Account>> createDomainSerializer(String schemaRegistryUrl) {
         final AggregateSerdes<AccountKey, AccountCommand, AccountEvents.AccountEvent, Optional<io.simplesource.example.auction.account.domain.Account>> avroAggregateSerdes =
                 new AvroAggregateSerdes<>(
-                        aggregateMapper, buildEventMapper(), buildCommandMapper(), keyMapper,
+                        keyMapper, buildCommandMapper(),  buildEventMapper(), aggregateMapper,
                         schemaRegistryUrl, false,
                         io.simplesource.example.auction.account.wire.Account.SCHEMA$);
         return avroAggregateSerdes;
