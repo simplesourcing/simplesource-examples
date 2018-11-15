@@ -15,6 +15,7 @@ import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.dsl.AggregateSetBuilder;
 import io.simplesource.kafka.internal.streams.PrefixResourceNamingStrategy;
 import io.simplesource.kafka.serialization.json.JsonAggregateSerdes;
+import io.simplesource.kafka.spec.AggregateSetSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,22 +44,25 @@ public final class UserJsonRunner {
             );
 
         final String aggregateName = "example-user";
-        final CommandAPISet aggregateSet = new AggregateSetBuilder()
-            .withKafkaConfig(builder ->
-                builder
-                    .withKafkaApplicationId("userMappedJsonApp1")
-                    .withKafkaBootstrap("localhost:9092")
-                    .withApplicationServer("localhost:1234")
-                    .build())
-            .addAggregate(UserAggregate.createSpec(
-                aggregateName,
-                    aggregateSerdes,
-                new PrefixResourceNamingStrategy("user_mapped_json_"),
-                    (k) -> Optional.empty()
-            ))
-            .build();
+        AggregateSetSpec aggregateSetSpec = new AggregateSetBuilder()
+                .withKafkaConfig(builder ->
+                        builder
+                                .withKafkaApplicationId("userMappedJsonApp1")
+                                .withKafkaBootstrap("localhost:9092")
+                                .withApplicationServer("localhost:1234")
+                                .build())
+                .addAggregate(UserAggregate.createSpec(
+                        aggregateName,
+                        aggregateSerdes,
+                        new PrefixResourceNamingStrategy("user_mapped_json_"),
+                        (k) -> Optional.empty()
+                ))
+                .build();
+
+        CommandAPISet commandApiSet = AggregateSetBuilder.getCommandAPISet(aggregateSetSpec);
+
         final CommandAPI<UserKey, UserCommand> api =
-            aggregateSet.getCommandAPI(aggregateName);
+                commandApiSet.getCommandAPI(aggregateName);
 
         logger.info("Started publishing commands");
         final Result<CommandError, NonEmptyList<Sequence>> result =

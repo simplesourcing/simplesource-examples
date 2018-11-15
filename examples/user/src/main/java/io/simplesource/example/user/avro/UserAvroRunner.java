@@ -15,6 +15,7 @@ import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.dsl.AggregateSetBuilder;
 import io.simplesource.kafka.internal.streams.PrefixResourceNamingStrategy;
 import io.simplesource.kafka.serialization.avro.AvroAggregateSerdes;
+import io.simplesource.kafka.spec.AggregateSetSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,7 @@ public final class UserAvroRunner {
                 io.simplesource.example.user.avro.api.User.SCHEMA$);
 
         final String aggregateName = "example-user";
-        final CommandAPISet aggregateSet = new AggregateSetBuilder()
+        final AggregateSetSpec aggregateSet = new AggregateSetBuilder()
             .withKafkaConfig(builder ->
                 builder
                     .withKafkaApplicationId("userMappedAvroApp1")
@@ -55,8 +56,9 @@ public final class UserAvroRunner {
                 (k) -> Optional.empty()
             ))
             .build();
+        CommandAPISet commandApiSet = AggregateSetBuilder.getCommandAPISet(aggregateSet);
         final CommandAPI<UserKey, UserCommand> api =
-            aggregateSet.getCommandAPI(aggregateName);
+                commandApiSet.getCommandAPI(aggregateName);
 
         logger.info("Started publishing commands");
         final Result<CommandError, NonEmptyList<Sequence>> result =

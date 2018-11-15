@@ -19,6 +19,7 @@ import io.simplesource.kafka.api.ResourceNamingStrategy;
 import io.simplesource.kafka.dsl.AggregateSetBuilder;
 import io.simplesource.kafka.dsl.KafkaConfig;
 import io.simplesource.kafka.internal.streams.PrefixResourceNamingStrategy;
+import io.simplesource.kafka.spec.AggregateSetSpec;
 import io.simplesource.kafka.spec.AggregateSpec;
 import org.apache.avro.Conversions;
 import org.apache.avro.generic.GenericData;
@@ -70,7 +71,8 @@ public class RestApplication {
 
             aggregateSetBuilder.addAggregate(aggregateSpec);
 
-            commandApiSet = aggregateSetBuilder.build();
+            AggregateSetSpec aggregateSetSpec = aggregateSetBuilder.build();
+            commandApiSet = AggregateSetBuilder.getCommandAPISet(aggregateSetSpec);
         }
         return commandApiSet;
     }

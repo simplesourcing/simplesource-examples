@@ -32,8 +32,6 @@ public final class UserDomainCommandExample {
                 Duration.ofMinutes(2L)
             )
             .flatMap(sequences -> {
-
-
                 logger.info("Received result {} new sequences", sequences);
                 return commandAPI.publishAndQueryCommand(new CommandAPI.Request<>(
                     key,
