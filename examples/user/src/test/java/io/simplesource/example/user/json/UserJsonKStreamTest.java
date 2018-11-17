@@ -26,8 +26,6 @@ import static io.simplesource.kafka.serialization.json.JsonGenericMapper.jsonDom
 import static io.simplesource.kafka.serialization.json.JsonOptionalGenericMapper.jsonOptionalDomainMapper;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-// TODO: fix the test helper
-@Disabled
 class UserJsonKStreamTest {
     private AggregateTestDriver<UserKey, UserCommand, UserEvent, Optional<User>> testAPI;
     private AggregateTestHelper<UserKey, UserCommand, UserEvent, Optional<User>> testHelper;
@@ -176,7 +174,7 @@ class UserJsonKStreamTest {
     void buggyEventHandler() {
         final UserKey id = new UserKey("myuser");
 
-        assertThrows(UnsupportedOperationException.class, () ->
+        assertThrows(org.opentest4j.AssertionFailedError.class, () ->
             testHelper.publishCommand(
                 id,
                 Sequence.first(),

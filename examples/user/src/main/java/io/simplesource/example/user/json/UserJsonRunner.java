@@ -64,7 +64,7 @@ public final class UserJsonRunner {
                 commandApiSet.getCommandAPI(aggregateName);
 
         logger.info("Started publishing commands");
-        final Result<CommandError, NonEmptyList<Sequence>> result =
+        final Result<CommandError, Sequence> result =
             submitCommands(api).unsafePerform(e -> CommandError.of(CommandError.Reason.InternalError, e));
         logger.info("Result of commands {}", result);
         logger.info("All commands published");

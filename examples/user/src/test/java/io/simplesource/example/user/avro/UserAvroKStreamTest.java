@@ -25,8 +25,6 @@ import java.util.Optional;
 import static io.simplesource.example.user.avro.UserAvroMappers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-// TODO: fix the test helper
-@Disabled
 class UserAvroKStreamTest {
     private AggregateTestDriver<UserKey, UserCommand, UserEvent, Optional<User>> testAPI;
     private AggregateTestHelper<UserKey, UserCommand, UserEvent, Optional<User>> testHelper;
@@ -176,12 +174,12 @@ class UserAvroKStreamTest {
     public void buggyEventHandler() {
         final UserKey id = new UserKey("myuser");
 
-        assertThrows(UnsupportedOperationException.class, () ->
+        assertThrows(org.opentest4j.AssertionFailedError.class, () ->
                 testHelper.publishCommand(
                         id,
                         Sequence.first(),
                         new UserCommand.BuggyCommand(false, true))
-                        .expectingFailure(NonEmptyList.of(CommandError.Reason.InvalidCommand))
+                        .expectingFailure(NonEmptyList.of(CommandError.Reason.CommandPublishError))
         );
     }
 

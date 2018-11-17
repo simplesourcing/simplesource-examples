@@ -16,7 +16,7 @@ import java.util.UUID;
 public final class UserDomainCommandExample {
     private static final Logger logger = LoggerFactory.getLogger(UserDomainCommandExample.class);
 
-    public static FutureResult<CommandError, NonEmptyList<Sequence>> submitCommands(
+    public static FutureResult<CommandError, Sequence> submitCommands(
             final CommandAPI<UserKey, UserCommand> commandAPI
     ) {
         final UserKey key = new UserKey("user" + System.currentTimeMillis());
@@ -35,7 +35,7 @@ public final class UserDomainCommandExample {
                 logger.info("Received result {} new sequences", sequences);
                 return commandAPI.publishAndQueryCommand(new CommandAPI.Request<>(
                     key,
-                    sequences.last(),
+                    sequences,
                     UUID.randomUUID(),
                     new UserCommand.UpdateName("Sarah Jones", lastName)),
                     Duration.ofMinutes(2L)

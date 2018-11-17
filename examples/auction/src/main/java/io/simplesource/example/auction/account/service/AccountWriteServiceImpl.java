@@ -166,7 +166,7 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                                                                                                    Duration duration) {
 
         FutureResult<CommandError, Sequence> commandResult = accountCommandAPI.publishAndQueryCommand(new CommandAPI.Request<>(accountKey,
-                sequence, UUID.randomUUID(), command), duration).map(NonEmptyList::last);
+                sequence, UUID.randomUUID(), command), duration);
 
         Function<NonEmptyList<CommandError>, Result<AccountError, Sequence>> failureMapFunc =
                 ers -> Result.failure(ers.map(COMMAND_ERROR_TO_ACCOUNT_ERROR_FUNCTION));
