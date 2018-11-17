@@ -24,7 +24,7 @@ import static com.google.common.collect.ImmutableList.of;
 import static io.simplesource.example.auction.RestApplication.accountResourceNamingStrategy;
 import static io.simplesource.example.auction.account.query.projection.AccountProjectionAggregator.accountTransactionEventAggregator;
 import static io.simplesource.example.auction.account.query.projection.AccountProjectionSpecBuilder.buildWithSequence;
-import static io.simplesource.kafka.internal.streams.KafkaStreamsUtils.*;
+import static io.simplesource.kafka.util.KafkaStreamsUtils.*;
 import static java.util.Objects.nonNull;
 
 public final class AccountProjectionStreamApp {

@@ -18,7 +18,7 @@ import io.simplesource.example.auction.account.service.AccountWriteServiceImpl;
 import io.simplesource.kafka.api.ResourceNamingStrategy;
 import io.simplesource.kafka.dsl.AggregateSetBuilder;
 import io.simplesource.kafka.dsl.KafkaConfig;
-import io.simplesource.kafka.internal.streams.PrefixResourceNamingStrategy;
+import io.simplesource.kafka.util.PrefixResourceNamingStrategy;
 import io.simplesource.kafka.spec.AggregateSetSpec;
 import io.simplesource.kafka.spec.AggregateSpec;
 import org.apache.avro.Conversions;
