@@ -11,10 +11,9 @@ import io.simplesource.example.user.domain.UserCommand;
 import io.simplesource.example.user.domain.UserEvent;
 import io.simplesource.example.user.domain.UserKey;
 import io.simplesource.kafka.api.AggregateSerdes;
-import io.simplesource.kafka.dsl.AggregateSetBuilder;
+import io.simplesource.kafka.dsl.EventSourcedApp;
 import io.simplesource.kafka.util.PrefixResourceNamingStrategy;
 import io.simplesource.kafka.serialization.avro.AvroAggregateSerdes;
-import io.simplesource.kafka.spec.AggregateSetSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,12 +40,11 @@ public final class UserAvroRunner {
                 io.simplesource.example.user.avro.api.User.SCHEMA$);
 
         final String aggregateName = "example-user";
-        final AggregateSetSpec aggregateSet = new AggregateSetBuilder()
+        final CommandAPISet commandApiSet = new EventSourcedApp()
             .withKafkaConfig(builder ->
                 builder
                     .withKafkaApplicationId("userMappedAvroApp1")
                     .withKafkaBootstrap("localhost:9092")
-                    .withApplicationServer("localhost:1234")
                     .build())
             .addAggregate(UserAggregate.createSpec(
                 aggregateName,
@@ -54,8 +52,9 @@ public final class UserAvroRunner {
                 new PrefixResourceNamingStrategy("user_avro_"),
                 (k) -> Optional.empty()
             ))
-            .build();
-        CommandAPISet commandApiSet = AggregateSetBuilder.getCommandAPISet(aggregateSet);
+            .start()
+            .getCommandAPISet("localhost");
+
         final CommandAPI<UserKey, UserCommand> api =
                 commandApiSet.getCommandAPI(aggregateName);
 

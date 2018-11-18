@@ -16,10 +16,9 @@ import io.simplesource.example.auction.account.service.AccountReadServiceImpl;
 import io.simplesource.example.auction.account.service.AccountWriteService;
 import io.simplesource.example.auction.account.service.AccountWriteServiceImpl;
 import io.simplesource.kafka.api.ResourceNamingStrategy;
-import io.simplesource.kafka.dsl.AggregateSetBuilder;
+import io.simplesource.kafka.dsl.EventSourcedApp;
 import io.simplesource.kafka.dsl.KafkaConfig;
 import io.simplesource.kafka.util.PrefixResourceNamingStrategy;
-import io.simplesource.kafka.spec.AggregateSetSpec;
 import io.simplesource.kafka.spec.AggregateSpec;
 import org.apache.avro.Conversions;
 import org.apache.avro.generic.GenericData;
@@ -39,7 +38,6 @@ import java.util.Optional;
 public class RestApplication {
     private static final String SCHEMA_REGISTRY_URL = "http://schema_registry:8081";
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
-    private static final String APPLICATION_SERVER = "localhost:1234";
     private static final String ACCOUNT_AGGREGATE_NAME = "account";
 
     private CommandAPISet commandApiSet = null;
@@ -54,12 +52,11 @@ public class RestApplication {
         SpecificData.get().addLogicalTypeConversion(new Conversions.DecimalConversion());
         GenericData.get().addLogicalTypeConversion(new Conversions.DecimalConversion());
         if (commandApiSet == null) {
-            AggregateSetBuilder aggregateSetBuilder = new AggregateSetBuilder();
+            EventSourcedApp EventSourcedApp = new EventSourcedApp();
 
-            aggregateSetBuilder.withKafkaConfig(new KafkaConfig.Builder()
+            EventSourcedApp.withKafkaConfig(new KafkaConfig.Builder()
                     .withKafkaApplicationId("account_app")
                     .withKafkaBootstrap(BOOTSTRAP_SERVERS)
-                    .withApplicationServer(APPLICATION_SERVER)
                     .build());
 
             AggregateSpec<AccountKey, AccountCommand, AccountEvents.AccountEvent, Optional<Account>> aggregateSpec =
@@ -69,10 +66,11 @@ public class RestApplication {
                             accountResourceNamingStrategy(),
                             (k) -> Optional.empty());
 
-            aggregateSetBuilder.addAggregate(aggregateSpec);
+            EventSourcedApp.addAggregate(aggregateSpec);
 
-            AggregateSetSpec aggregateSetSpec = aggregateSetBuilder.build();
-            commandApiSet = AggregateSetBuilder.getCommandAPISet(aggregateSetSpec);
+            commandApiSet = EventSourcedApp
+                    .start()
+                    .getCommandAPISet("localhost");
         }
         return commandApiSet;
     }

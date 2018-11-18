@@ -11,7 +11,7 @@ import io.simplesource.example.user.domain.UserCommand;
 import io.simplesource.example.user.domain.UserEvent;
 import io.simplesource.example.user.domain.UserKey;
 import io.simplesource.kafka.api.AggregateSerdes;
-import io.simplesource.kafka.dsl.AggregateSetBuilder;
+import io.simplesource.kafka.dsl.EventSourcedApp;
 import io.simplesource.kafka.util.PrefixResourceNamingStrategy;
 import io.simplesource.kafka.serialization.json.JsonAggregateSerdes;
 import io.simplesource.kafka.spec.AggregateSetSpec;
@@ -42,12 +42,11 @@ public final class UserJsonRunner {
                 jsonOptionalDomainMapper());
 
         final String aggregateName = "example-user";
-        AggregateSetSpec aggregateSetSpec = new AggregateSetBuilder()
+        CommandAPISet commandApiSet = new EventSourcedApp()
                 .withKafkaConfig(builder ->
                         builder
                                 .withKafkaApplicationId("userMappedJsonApp1")
                                 .withKafkaBootstrap("localhost:9092")
-                                .withApplicationServer("localhost:1234")
                                 .build())
                 .addAggregate(UserAggregate.createSpec(
                         aggregateName,
@@ -55,9 +54,8 @@ public final class UserJsonRunner {
                         new PrefixResourceNamingStrategy("user_mapped_json_"),
                         (k) -> Optional.empty()
                 ))
-                .build();
-
-        CommandAPISet commandApiSet = AggregateSetBuilder.getCommandAPISet(aggregateSetSpec);
+                .start()
+                .getCommandAPISet("localhost");
 
         final CommandAPI<UserKey, UserCommand> api =
                 commandApiSet.getCommandAPI(aggregateName);

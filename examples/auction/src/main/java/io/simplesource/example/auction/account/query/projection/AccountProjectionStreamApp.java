@@ -34,7 +34,6 @@ public final class AccountProjectionStreamApp {
     private static final String PROJECTION_APP_ID = "account_projection_app";
     public static final String SCHEMA_REGISTRY_URL = "http://schema_registry:8081";
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
-    private static final String APPLICATION_SERVER = "localhost:1234";
     private static final String ACCOUNT_TRANSACTIONS_PROJECTION_TOPIC = "auction_account_transactions_projection";
     private static final String ACCOUNT_PROJECTION_TOPIC = "auction_account_projection";
 
@@ -99,7 +98,6 @@ public final class AccountProjectionStreamApp {
                 builder
                         .withKafkaApplicationId(PROJECTION_APP_ID)
                         .withKafkaBootstrap(BOOTSTRAP_SERVERS)
-                        .withApplicationServer(APPLICATION_SERVER)
                         .build();
         return builderFunc.apply(new KafkaConfig.Builder());
     }
