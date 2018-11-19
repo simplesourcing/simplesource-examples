@@ -52,13 +52,6 @@ public class RestApplication {
         SpecificData.get().addLogicalTypeConversion(new Conversions.DecimalConversion());
         GenericData.get().addLogicalTypeConversion(new Conversions.DecimalConversion());
         if (commandApiSet == null) {
-            EventSourcedApp EventSourcedApp = new EventSourcedApp();
-
-            EventSourcedApp.withKafkaConfig(new KafkaConfig.Builder()
-                    .withKafkaApplicationId("account_app")
-                    .withKafkaBootstrap(BOOTSTRAP_SERVERS)
-                    .build());
-
             AggregateSpec<AccountKey, AccountCommand, AccountEvents.AccountEvent, Optional<Account>> aggregateSpec =
                     AccountMappedAggregate.createSpec(
                             ACCOUNT_AGGREGATE_NAME,
@@ -66,9 +59,12 @@ public class RestApplication {
                             accountResourceNamingStrategy(),
                             (k) -> Optional.empty());
 
-            EventSourcedApp.addAggregate(aggregateSpec);
-
-            commandApiSet = EventSourcedApp
+            commandApiSet = new EventSourcedApp()
+                    .withKafkaConfig(new KafkaConfig.Builder()
+                            .withKafkaApplicationId("account_app")
+                            .withKafkaBootstrap(BOOTSTRAP_SERVERS)
+                            .build())
+                    .addAggregate(aggregateSpec)
                     .start()
                     .getCommandAPISet("localhost");
         }
