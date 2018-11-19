@@ -36,6 +36,7 @@ public final class AccountMappedAggregate {
                 .withInitialValue(initialValue)
                 .withAggregator(AccountEvents.getAggregator())
                 .withCommandHandler(accountCommandHandlers())
+                .withDefaultTopicSpec(6, 1, 1)
                 .build();
     }
 
