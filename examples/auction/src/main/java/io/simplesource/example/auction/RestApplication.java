@@ -3,10 +3,7 @@ package io.simplesource.example.auction;
 import io.simplesource.api.CommandAPI;
 import io.simplesource.api.CommandAPISet;
 import io.simplesource.example.auction.account.avro.AccountAvroMappers;
-import io.simplesource.example.auction.account.command.AccountMappedAggregate;
-import io.simplesource.example.auction.account.domain.Account;
 import io.simplesource.example.auction.account.domain.AccountCommand;
-import io.simplesource.example.auction.account.domain.AccountEvents;
 import io.simplesource.example.auction.account.domain.AccountKey;
 import io.simplesource.example.auction.account.query.projection.AccountProjectionStreamApp;
 import io.simplesource.example.auction.account.query.repository.AccountRepository;
@@ -15,11 +12,9 @@ import io.simplesource.example.auction.account.service.AccountReadService;
 import io.simplesource.example.auction.account.service.AccountReadServiceImpl;
 import io.simplesource.example.auction.account.service.AccountWriteService;
 import io.simplesource.example.auction.account.service.AccountWriteServiceImpl;
-import io.simplesource.kafka.api.ResourceNamingStrategy;
-import io.simplesource.kafka.dsl.EventSourcedApp;
+import io.simplesource.kafka.dsl.EventSourcedClient;
 import io.simplesource.kafka.dsl.KafkaConfig;
-import io.simplesource.kafka.util.PrefixResourceNamingStrategy;
-import io.simplesource.kafka.spec.AggregateSpec;
+import io.simplesource.kafka.spec.TopicSpec;
 import org.apache.avro.Conversions;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.specific.SpecificData;
@@ -32,13 +27,12 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import java.util.Optional;
+import java.util.Collections;
+
+import static io.simplesource.example.auction.AppShared.*;
 
 @SpringBootApplication
 public class RestApplication {
-    private static final String SCHEMA_REGISTRY_URL = "http://schema_registry:8081";
-    private static final String BOOTSTRAP_SERVERS = "localhost:9092";
-    private static final String ACCOUNT_AGGREGATE_NAME = "account";
 
     private CommandAPISet commandApiSet = null;
 
@@ -52,25 +46,23 @@ public class RestApplication {
         SpecificData.get().addLogicalTypeConversion(new Conversions.DecimalConversion());
         GenericData.get().addLogicalTypeConversion(new Conversions.DecimalConversion());
         if (commandApiSet == null) {
-            EventSourcedApp EventSourcedApp = new EventSourcedApp();
+            EventSourcedClient client = new EventSourcedClient();
 
-            EventSourcedApp.withKafkaConfig(new KafkaConfig.Builder()
-                    .withKafkaApplicationId("account_app")
+            client.withKafkaConfig(new KafkaConfig.Builder()
                     .withKafkaBootstrap(BOOTSTRAP_SERVERS)
-                    .build());
+                    .withKafkaApplicationId("") // TODO: fix
+                    .build())
+                    .<AccountKey, AccountCommand>addCommands(builder -> builder
+                        .withClientId("client_id")
+                        .withCommandResponseRetention(3600L)
+                        .withName(ACCOUNT_AGGREGATE_NAME)
+                        .withSerdes(AccountAvroMappers.createCommandSerdes(SCHEMA_REGISTRY_URL))
+                        .withResourceNamingStrategy(accountResourceNamingStrategy())
+                        .withTopicSpec(new TopicSpec(8, (short)1, Collections.emptyMap()))
+                        .build());
 
-            AggregateSpec<AccountKey, AccountCommand, AccountEvents.AccountEvent, Optional<Account>> aggregateSpec =
-                    AccountMappedAggregate.createSpec(
-                            ACCOUNT_AGGREGATE_NAME,
-                            AccountAvroMappers.createDomainSerializer(SCHEMA_REGISTRY_URL),
-                            accountResourceNamingStrategy(),
-                            (k) -> Optional.empty());
-
-            EventSourcedApp.addAggregate(aggregateSpec);
-
-            commandApiSet = EventSourcedApp
-                    .start()
-                    .getCommandAPISet("localhost");
+            commandApiSet = client
+                    .build();
         }
         return commandApiSet;
     }
@@ -96,10 +88,6 @@ public class RestApplication {
         config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
-    }
-
-    public static ResourceNamingStrategy accountResourceNamingStrategy() {
-        return new PrefixResourceNamingStrategy("account_avro_");
     }
 
     public static void main(String[] args) {

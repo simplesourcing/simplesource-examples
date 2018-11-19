@@ -21,7 +21,7 @@ import java.util.Properties;
 import java.util.function.Function;
 
 import static com.google.common.collect.ImmutableList.of;
-import static io.simplesource.example.auction.RestApplication.accountResourceNamingStrategy;
+import static io.simplesource.example.auction.AppShared.*;
 import static io.simplesource.example.auction.account.query.projection.AccountProjectionAggregator.accountTransactionEventAggregator;
 import static io.simplesource.example.auction.account.query.projection.AccountProjectionSpecBuilder.buildWithSequence;
 import static io.simplesource.kafka.util.KafkaStreamsUtils.*;
@@ -29,11 +29,8 @@ import static java.util.Objects.nonNull;
 
 public final class AccountProjectionStreamApp {
     private static final Logger logger = LoggerFactory.getLogger(AccountProjectionStreamApp.class);
-    public static final String ACCOUNT_AGGREGATE_NAME = "account";
     private static final String ACCOUNT_EVENT_TOPIC_NAME = "account_avro_account-event";
     private static final String PROJECTION_APP_ID = "account_projection_app";
-    public static final String SCHEMA_REGISTRY_URL = "http://schema_registry:8081";
-    private static final String BOOTSTRAP_SERVERS = "localhost:9092";
     private static final String ACCOUNT_TRANSACTIONS_PROJECTION_TOPIC = "auction_account_transactions_projection";
     private static final String ACCOUNT_PROJECTION_TOPIC = "auction_account_projection";
 
@@ -105,7 +102,7 @@ public final class AccountProjectionStreamApp {
     private static AggregateSpec<AccountKey, ?, AccountEvent, ?> accountAggregateSpec() {
         return AccountMappedAggregate.createSpec(
                 ACCOUNT_AGGREGATE_NAME,
-                AccountAvroMappers.createDomainSerializer(SCHEMA_REGISTRY_URL),
+                AccountAvroMappers.createAggregateSerdes(SCHEMA_REGISTRY_URL),
                 accountResourceNamingStrategy(),
                 (k) -> Optional.empty());
     }

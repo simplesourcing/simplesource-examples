@@ -8,7 +8,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.common.serialization.Serde;
 
 import static io.simplesource.example.auction.account.query.projection.AccountProjectionStreamApp.ACCOUNT_AGGREGATE_SPEC;
-import static io.simplesource.example.auction.account.query.projection.AccountProjectionStreamApp.SCHEMA_REGISTRY_URL;
+import static io.simplesource.example.auction.AppShared.SCHEMA_REGISTRY_URL;
 import static io.simplesource.kafka.serialization.avro.AvroGenericUtils.genericAvroSerde;
 
 public final class AccountProjectionSpecBuilder {

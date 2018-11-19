@@ -7,7 +7,9 @@ import io.simplesource.example.auction.account.domain.ReservationId;
 import io.simplesource.example.auction.account.wire.*;
 import io.simplesource.example.auction.core.Money;
 import io.simplesource.kafka.api.AggregateSerdes;
+import io.simplesource.kafka.api.CommandSerdes;
 import io.simplesource.kafka.serialization.avro.AvroAggregateSerdes;
+import io.simplesource.kafka.serialization.avro.AvroCommandSerdes;
 import io.simplesource.kafka.serialization.avro.mappers.DomainMapperBuilder;
 import io.simplesource.kafka.serialization.avro.mappers.DomainMapperRegistry;
 import io.simplesource.kafka.serialization.util.GenericMapper;
@@ -21,13 +23,20 @@ import static io.simplesource.kafka.serialization.avro.AvroSpecificGenericMapper
 import static java.util.stream.Collectors.toList;
 
 public final class AccountAvroMappers {
-    public static AggregateSerdes<AccountKey, AccountCommand, AccountEvents.AccountEvent, Optional<io.simplesource.example.auction.account.domain.Account>> createDomainSerializer(String schemaRegistryUrl) {
+    public static AggregateSerdes<AccountKey, AccountCommand, AccountEvents.AccountEvent, Optional<io.simplesource.example.auction.account.domain.Account>> createAggregateSerdes(String schemaRegistryUrl) {
         final AggregateSerdes<AccountKey, AccountCommand, AccountEvents.AccountEvent, Optional<io.simplesource.example.auction.account.domain.Account>> avroAggregateSerdes =
                 new AvroAggregateSerdes<>(
                         keyMapper, buildCommandMapper(),  buildEventMapper(), aggregateMapper,
                         schemaRegistryUrl, false,
                         io.simplesource.example.auction.account.wire.Account.SCHEMA$);
         return avroAggregateSerdes;
+    }
+
+    public static CommandSerdes<AccountKey, AccountCommand> createCommandSerdes(String schemaRegistryUrl) {
+        final CommandSerdes<AccountKey, AccountCommand> commandSerdes =
+                new AvroCommandSerdes<>(
+                        keyMapper, buildCommandMapper(), schemaRegistryUrl, false);
+        return commandSerdes;
     }
 
     public static final GenericMapper<Optional<io.simplesource.example.auction.account.domain.Account>, GenericRecord> aggregateMapper = new GenericMapper<Optional<io.simplesource.example.auction.account.domain.Account>, GenericRecord>() {
