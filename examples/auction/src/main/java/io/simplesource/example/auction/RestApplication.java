@@ -48,9 +48,8 @@ public class RestApplication {
         if (commandApiSet == null) {
             EventSourcedClient client = new EventSourcedClient();
 
-            client.withKafkaConfig(new KafkaConfig.Builder()
+            client.withKafkaConfig(builder -> builder
                     .withKafkaBootstrap(BOOTSTRAP_SERVERS)
-                    .withKafkaApplicationId("") // TODO: fix
                     .build())
                     .<AccountKey, AccountCommand>addCommands(builder -> builder
                         .withClientId("client_id")
