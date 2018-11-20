@@ -10,9 +10,9 @@ import io.simplesource.example.user.domain.UserEvent;
 import io.simplesource.example.user.domain.UserKey;
 import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.dsl.KafkaConfig;
-import io.simplesource.kafka.internal.streams.AggregateTestDriver;
-import io.simplesource.kafka.internal.streams.AggregateTestHelper;
-import io.simplesource.kafka.internal.streams.PrefixResourceNamingStrategy;
+import io.simplesource.kafka.testutils.AggregateTestDriver;
+import io.simplesource.kafka.testutils.AggregateTestHelper;
+import io.simplesource.kafka.util.PrefixResourceNamingStrategy;
 import io.simplesource.kafka.model.ValueWithSequence;
 import io.simplesource.kafka.serialization.json.JsonAggregateSerdes;
 import org.junit.jupiter.api.AfterEach;
@@ -33,11 +33,10 @@ class UserJsonKStreamTest {
     void setup() {
         final AggregateSerdes<UserKey, UserCommand, UserEvent, Optional<User>> aggregateSerdes =
             new JsonAggregateSerdes<>(
-                jsonOptionalDomainMapper(),
                 jsonDomainMapper(),
                 jsonDomainMapper(),
-                jsonDomainMapper()
-            );
+                jsonDomainMapper(),
+                jsonOptionalDomainMapper());
 
         testAPI = new AggregateTestDriver<>(
             UserAggregate.createSpec(
@@ -47,7 +46,6 @@ class UserJsonKStreamTest {
                 k -> Optional.empty()),
             new KafkaConfig.Builder()
                 .withKafkaApplicationId("testApp")
-                .withApplicationServer("server:8888")
                 .withKafkaBootstrap("0.0.0.0:9092")
                 .withExactlyOnce()
                 .build());
@@ -174,7 +172,7 @@ class UserJsonKStreamTest {
     void buggyEventHandler() {
         final UserKey id = new UserKey("myuser");
 
-        assertThrows(UnsupportedOperationException.class, () ->
+        assertThrows(org.opentest4j.AssertionFailedError.class, () ->
             testHelper.publishCommand(
                 id,
                 Sequence.first(),
