@@ -24,16 +24,16 @@ public final class UserDomainCommandExample {
         final String lastName = "Dubois";
 
         return commandAPI
-            .publishAndQueryCommand(new CommandAPI.Request<>(
+            .publishCommand(new CommandAPI.Request<>(
                 key,
                 Sequence.first(),
                 UUID.randomUUID(),
                 new UserCommand.InsertUser(firstName, lastName)),
-                Duration.ofMinutes(2L)
+                Duration.ofMillis(2L)
             )
             .flatMap(sequences -> {
                 logger.info("Received result {} new sequences", sequences);
-                return commandAPI.publishAndQueryCommand(new CommandAPI.Request<>(
+                return commandAPI.publishCommand(new CommandAPI.Request<>(
                     key,
                     sequences,
                     UUID.randomUUID(),

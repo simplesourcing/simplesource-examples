@@ -165,7 +165,7 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                                                                                                    Sequence sequence, C command,
                                                                                                    Duration duration) {
 
-        FutureResult<CommandError, Sequence> commandResult = accountCommandAPI.publishAndQueryCommand(new CommandAPI.Request<>(accountKey,
+        FutureResult<CommandError, Sequence> commandResult = accountCommandAPI.publishCommand(new CommandAPI.Request<>(accountKey,
                 sequence, UUID.randomUUID(), command), duration);
 
         Function<NonEmptyList<CommandError>, Result<AccountError, Sequence>> failureMapFunc =
