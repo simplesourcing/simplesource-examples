@@ -24,7 +24,7 @@ public final class UserDomainCommandExample {
         final String lastName = "Dubois";
 
         return commandAPI
-            .publishCommand(new CommandAPI.Request<>(
+            .publishAndQueryCommand(new CommandAPI.Request<>(
                 key,
                 Sequence.first(),
                 UUID.randomUUID(),
@@ -33,7 +33,7 @@ public final class UserDomainCommandExample {
             )
             .flatMap(sequences -> {
                 logger.info("Received result {} new sequences", sequences);
-                return commandAPI.publishCommand(new CommandAPI.Request<>(
+                return commandAPI.publishAndQueryCommand(new CommandAPI.Request<>(
                     key,
                     sequences,
                     UUID.randomUUID(),
