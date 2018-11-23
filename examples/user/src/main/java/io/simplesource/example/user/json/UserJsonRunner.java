@@ -37,10 +37,16 @@ public final class UserJsonRunner {
     private static final String aggregateName = "example-user";
     private static final String bootstrapServers = "localhost:9092";
 
+    private final static AggregateSerdes<UserKey, UserCommand, UserEvent, Optional<User>> aggregateSerdes =
+            new JsonAggregateSerdes<>(
+                    jsonDomainMapper(),
+                    jsonDomainMapper(),
+                    jsonDomainMapper(),
+                    jsonOptionalDomainMapper());
+
     public static void main(final String[] args) {
 
-        startStreams();
-        final CommandAPI<UserKey, UserCommand> api = startClient();
+        final CommandAPI<UserKey, UserCommand> api = startAll().getCommandAPI(aggregateName);
 
         // publish some commands
         logger.info("Started publishing commands");
@@ -50,48 +56,22 @@ public final class UserJsonRunner {
         logger.info("All commands published");
     }
 
-    private static void startStreams() {
-        final AggregateSerdes<UserKey, UserCommand, UserEvent, Optional<User>> aggregateSerdes =
-                new JsonAggregateSerdes<>(
-                        jsonDomainMapper(),
-                        jsonDomainMapper(),
-                        jsonDomainMapper(),
-                        jsonOptionalDomainMapper());
-
-        new EventSourcedApp()
-                .withKafkaConfig(builder ->
-                        builder
-                                .withKafkaApplicationId("userMappedJsonApp1")
-                                .withKafkaBootstrap(bootstrapServers)
-                                .build())
-                .addAggregate(UserAggregate.createSpec(
-                        aggregateName,
-                        aggregateSerdes,
-                        namingStrategy,
-                        (k) -> Optional.empty()
-                ))
-                .start();
-    }
-
-    private static CommandAPI<UserKey, UserCommand> startClient() {
-        final CommandSerdes<UserKey, UserCommand> commandSerdes =
-                new JsonCommandSerdes<>(
-                        jsonDomainMapper(),
-                        jsonDomainMapper());
-
-        final CommandAPISet commandApiSet =
-                new EventSourcedClient()
-                        .<UserKey, UserCommand>addCommands(builder -> builder
-                                .withClientId("userJsonClient")
-                                .withName(aggregateName)
-                                .withSerdes(commandSerdes)
-                                .withResourceNamingStrategy(namingStrategy)
-                                .build())
-                        .withKafkaConfig(builder -> builder
-                                .withKafkaBootstrap(bootstrapServers)
-                                .build())
-                        .build();
-
-        return commandApiSet.getCommandAPI(aggregateName);
+    private static CommandAPISet startAll() {
+        return new EventSourcedApp()
+            .withKafkaConfig(builder ->
+                    builder
+                        .withKafkaApplicationId("userMappedJsonApp1")
+                        .withKafkaBootstrap(bootstrapServers)
+                        .build())
+            .<UserKey, UserCommand, UserEvent, Optional<User>>addAggregate(builder -> builder
+                    .withName(aggregateName)
+                    .withSerdes(aggregateSerdes)
+                    .withResourceNamingStrategy(namingStrategy)
+                    .withInitialValue((k) -> Optional.empty())
+                    .withAggregator(UserEvent.getAggregator())
+                    .withCommandHandler(UserCommand.getCommandHandler())
+            )
+            .start()
+            .getCommandAPISet(aggregateName);
     }
 }
