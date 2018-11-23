@@ -29,7 +29,7 @@ public final class UserDomainCommandExample {
                 Sequence.first(),
                 UUID.randomUUID(),
                 new UserCommand.InsertUser(firstName, lastName)),
-                Duration.ofMillis(2L)
+                Duration.ofMinutes(2L)
             )
             .flatMap(sequences -> {
                 logger.info("Received result {} new sequences", sequences);
