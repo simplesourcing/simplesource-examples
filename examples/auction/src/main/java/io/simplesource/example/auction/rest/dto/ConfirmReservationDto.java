@@ -5,13 +5,13 @@ import java.math.BigDecimal;
 
 public final class ConfirmReservationDto {
     @NotNull
-    private BigDecimal amount;
+    private final BigDecimal amount;
+
+    public ConfirmReservationDto(@NotNull BigDecimal amount) {
+        this.amount = amount;
+    }
 
     public BigDecimal getAmount() {
         return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
     }
 }

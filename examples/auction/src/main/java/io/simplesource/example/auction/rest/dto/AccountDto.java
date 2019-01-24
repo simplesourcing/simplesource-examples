@@ -3,22 +3,18 @@ package io.simplesource.example.auction.rest.dto;
 import java.math.BigDecimal;
 
 public final class AccountDto {
-    private String userName;
-    private BigDecimal funds;
+    private final String userName;
+    private final BigDecimal funds;
+
+    public AccountDto(String userName, BigDecimal funds) {
+        this.userName = userName;
+        this.funds = funds;
+    }
 
     public String getUserName() {
         return userName;
     }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
     public BigDecimal getFunds() {
         return funds;
-    }
-
-    public void setFunds(BigDecimal funds) {
-        this.funds = funds;
     }
 }

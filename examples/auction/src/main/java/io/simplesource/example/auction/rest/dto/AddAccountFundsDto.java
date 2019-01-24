@@ -5,13 +5,13 @@ import java.math.BigDecimal;
 
 public final class AddAccountFundsDto {
     @NotNull
-    private BigDecimal funds;
+    private final BigDecimal funds;
+
+    public AddAccountFundsDto(@NotNull BigDecimal funds) {
+        this.funds = funds;
+    }
 
     public BigDecimal getFunds() {
         return funds;
-    }
-
-    public void setFunds(BigDecimal funds) {
-        this.funds = funds;
     }
 }

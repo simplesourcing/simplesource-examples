@@ -9,19 +9,16 @@ public final class CreateAccountDto {
     @NotNull
     private AccountDto accountDto;
 
+    public CreateAccountDto(@NotNull UUID accountId, @NotNull AccountDto accountDto) {
+        this.accountId = accountId;
+        this.accountDto = accountDto;
+    }
+
     public UUID getAccountId() {
         return accountId;
     }
 
-    public void setAccountId(UUID accountId) {
-        this.accountId = accountId;
-    }
-
     public AccountDto getAccountDto() {
         return accountDto;
-    }
-
-    public void setAccountDto(AccountDto accountDto) {
-        this.accountDto = accountDto;
     }
 }

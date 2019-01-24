@@ -5,25 +5,21 @@ import java.util.UUID;
 
 public final class CreateAuctionDto {
     @NotNull
-    private UUID key;
+    private final UUID key;
     @NotNull
-    private AuctionDto value;
+    private final AuctionDto value;
+
+    public CreateAuctionDto(@NotNull UUID key, @NotNull AuctionDto value) {
+        this.key = key;
+        this.value = value;
+    }
 
     public UUID getKey() {
         return key;
-    }
-
-    public CreateAuctionDto setKey(UUID key) {
-        this.key = key;
-        return this;
     }
 
     public AuctionDto getValue() {
         return value;
     }
 
-    public CreateAuctionDto setValue(AuctionDto value) {
-        this.value = value;
-        return this;
-    }
 }
