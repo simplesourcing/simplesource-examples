@@ -13,7 +13,6 @@ import io.simplesource.example.auction.account.service.AccountReadServiceImpl;
 import io.simplesource.example.auction.account.service.AccountWriteService;
 import io.simplesource.example.auction.account.service.AccountWriteServiceImpl;
 import io.simplesource.kafka.dsl.EventSourcedClient;
-import io.simplesource.kafka.dsl.KafkaConfig;
 import io.simplesource.kafka.spec.TopicSpec;
 import org.apache.avro.Conversions;
 import org.apache.avro.generic.GenericData;

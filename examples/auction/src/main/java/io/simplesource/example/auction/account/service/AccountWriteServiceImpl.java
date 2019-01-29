@@ -66,13 +66,13 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                         .map(Optional::get)
                         .collect(Collectors.toList());
 
-        if (!validationErrorReasons.isEmpty()) {
-            return FutureResult.fail(NonEmptyList.fromList(validationErrorReasons));
-        }
-
-        logger.info("Creating account with username {} and initial fund is {}", account.username(), account.funds());
-        AccountCommand.CreateAccount command = new AccountCommand.CreateAccount(account.username(), account.funds());
-        return this.commandAndQueryAccount(accountKey, Sequence.first(), command, Duration.ofMinutes(1));
+        return NonEmptyList.fromList(validationErrorReasons)
+                .map(FutureResult::<AccountError, Sequence>fail)
+                .orElseGet(() -> {
+                    logger.info("Creating account with username {} and initial fund is {}", account.username(), account.funds());
+                    AccountCommand.CreateAccount command = new AccountCommand.CreateAccount(account.username(), account.funds());
+                    return this.commandAndQueryAccount(accountKey, Sequence.first(), command, Duration.ofMinutes(1));
+                });
     }
 
     @Override
@@ -83,11 +83,11 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                 usernameNotTakenBefore(accountKey, username)).filter(Optional::isPresent)
                 .map(Optional::get).collect(Collectors.toList());
 
-        if (!validationErrorReasons.isEmpty()) {
-            return FutureResult.fail(NonEmptyList.fromList(validationErrorReasons));
-        }
-
-        return commandAndQueryExistingAccount(accountKey, new AccountCommand.UpdateAccount(username), Duration.ofMinutes(1));
+        return NonEmptyList.fromList(validationErrorReasons)
+                .map(FutureResult::<AccountError, Sequence>fail)
+                .orElseGet(() ->
+                        commandAndQueryExistingAccount(accountKey, new AccountCommand.UpdateAccount(username), Duration.ofMinutes(1))
+                );
     }
 
     @Override
@@ -113,12 +113,12 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                 .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
                 .collect(Collectors.toList());
 
-        if (!validationErrorReasons.isEmpty()) {
-            return FutureResult.fail(NonEmptyList.fromList(validationErrorReasons));
-        }
-
-        return commandAndQueryExistingAccount(accountKey, new AccountCommand.ReserveFunds(reservationId, reservation.amount(),
-                reservation.description()), Duration.ofMinutes(1));
+        return NonEmptyList.fromList(validationErrorReasons)
+                .map(FutureResult::<AccountError, Sequence>fail)
+                .orElseGet(() ->
+                        commandAndQueryExistingAccount(accountKey, new AccountCommand.ReserveFunds(reservationId, reservation.amount(),
+                                reservation.description()), Duration.ofMinutes(1))
+                );
     }
 
     @Override
@@ -141,14 +141,14 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                 .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
                 .collect(Collectors.toList());
 
-        if (!validationErrorReasons.isEmpty()) {
-            return FutureResult.fail(NonEmptyList.fromList(validationErrorReasons));
-        }
-
-        Optional<AccountError> mayBeInvalid = validateReservationForAccount(accountKey, reservationId);
-        return mayBeInvalid
-                .<FutureResult<AccountError, Sequence>>map(FutureResult::fail)
-                .orElse(commandAndQueryExistingAccount(accountKey, command, Duration.ofMinutes(1)));
+        return NonEmptyList.fromList(validationErrorReasons)
+                .map(FutureResult::<AccountError, Sequence>fail)
+                .orElseGet(() -> {
+                    Optional<AccountError> mayBeInvalid = validateReservationForAccount(accountKey, reservationId);
+                    return mayBeInvalid
+                            .<FutureResult<AccountError, Sequence>>map(FutureResult::fail)
+                            .orElse(commandAndQueryExistingAccount(accountKey, command, Duration.ofMinutes(1)));
+                });
     }
 
     private <C extends AccountCommand> FutureResult<AccountError, Sequence> commandAndQueryExistingAccount(AccountKey accountKey,

@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface AccountRepository extends MongoRepository<AccountView, String> {
     @Query("{ 'userName' : ?1} , {'id': {'$ne': ?0} }")
     List<AccountView> findOtherAccountsWithUsername(@Param("accountId") String accountId, @Param("username") String username);
+
     default Optional<AccountView> findByAccountId(String accountId) {
         return findById(accountId);
     }
