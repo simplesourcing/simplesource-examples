@@ -6,6 +6,7 @@ import io.simplesource.data.FutureResult;
 import io.simplesource.data.NonEmptyList;
 import io.simplesource.data.Result;
 import io.simplesource.data.Sequence;
+import io.simplesource.example.auction.account.command.AccountCommand;
 import io.simplesource.example.auction.account.domain.*;
 import io.simplesource.example.auction.account.domain.AccountError.Reason;
 import io.simplesource.example.auction.account.query.repository.AccountRepository;

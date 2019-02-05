@@ -5,6 +5,7 @@ import io.simplesource.data.FutureResult;
 import io.simplesource.data.NonEmptyList;
 import io.simplesource.data.Sequence;
 import io.simplesource.example.auction.account.domain.*;
+import io.simplesource.example.auction.account.command.AccountCommand;
 import io.simplesource.example.auction.account.query.repository.AccountRepository;
 import io.simplesource.example.auction.account.query.repository.AccountTransactionRepository;
 import io.simplesource.example.auction.account.query.views.AccountTransactionView;

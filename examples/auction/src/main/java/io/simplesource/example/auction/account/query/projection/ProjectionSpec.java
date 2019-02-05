@@ -1,6 +1,6 @@
 package io.simplesource.example.auction.account.query.projection;
 
-import io.simplesource.example.auction.account.domain.AccountEvents.AccountEvent;
+import io.simplesource.example.auction.account.event.AccountEvent;
 import io.simplesource.example.auction.account.domain.AccountKey;
 import io.simplesource.kafka.api.AggregateSerdes;
 import lombok.Value;

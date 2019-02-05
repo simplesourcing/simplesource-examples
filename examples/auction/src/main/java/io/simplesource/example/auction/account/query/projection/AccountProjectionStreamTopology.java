@@ -2,8 +2,7 @@ package io.simplesource.example.auction.account.query.projection;
 
 import io.simplesource.api.Aggregator;
 import io.simplesource.example.auction.account.domain.Account;
-import io.simplesource.example.auction.account.domain.AccountEvents;
-import io.simplesource.example.auction.account.domain.AccountEvents.AccountEvent;
+import io.simplesource.example.auction.account.event.AccountEvent;
 import io.simplesource.example.auction.account.domain.AccountKey;
 import io.simplesource.kafka.model.ValueWithSequence;
 import org.apache.kafka.common.serialization.Serde;
@@ -38,7 +37,7 @@ public final class AccountProjectionStreamTopology implements KStreamProjectionT
     }
 
     @Override
-    public void addTopology(final KStream<AccountKey, ValueWithSequence<AccountEvents.AccountEvent>> accountEventStream) {
+    public void addTopology(final KStream<AccountKey, ValueWithSequence<AccountEvent>> accountEventStream) {
         Materialized<AccountKey, ValueWithSequence<Optional<Account>>, KeyValueStore<Bytes, byte[]>> materialized = Materialized.
                 <AccountKey, ValueWithSequence<Optional<Account>>, KeyValueStore<Bytes, byte[]>>as(
                         projectionSpec.sourceTopicName() + STATE_STORE_NAME_SEPARATOR + projectionSpec.outputTopicName())
