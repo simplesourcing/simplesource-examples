@@ -85,11 +85,11 @@ public final class AccountMappedAggregate {
                             .filter(Optional::isPresent)
                             .map(Optional::get).collect(Collectors.toList());
 
-                    if (!validationErrorReasons.isEmpty()) {
-                        return failure(NonEmptyList.fromList(validationErrorReasons));
-                    }
-
-                    return success(new AccountEvents.FundsReserved(command.reservationId(), command.description(), command.funds()));
+                    return NonEmptyList.fromList(validationErrorReasons)
+                            .map(AccountMappedAggregate::failure)
+                            .orElseGet(() ->
+                                    success(new AccountEvents.FundsReserved(command.reservationId(), command.description(), command.funds()))
+                            );
                 })
                 .orElse(failure("Can not find an account with ID: " + accountId.id()));
     }
@@ -124,11 +124,11 @@ public final class AccountMappedAggregate {
                             .filter(Optional::isPresent)
                             .map(Optional::get).collect(Collectors.toList());
 
-                    if (!validationErrorReasons.isEmpty()) {
-                        return failure(NonEmptyList.fromList(validationErrorReasons));
-                    }
-
-                    return success(new AccountEvents.ReservationConfirmed(command.reservationId(), command.finalAmount()));
+                    return NonEmptyList.fromList(validationErrorReasons)
+                            .map(AccountMappedAggregate::failure)
+                            .orElseGet(() ->
+                                    success(new AccountEvents.ReservationConfirmed(command.reservationId(), command.finalAmount()))
+                            );
                 })
                 .orElse(failure("Can not find an account with ID: " + accountId.id()));
     }
