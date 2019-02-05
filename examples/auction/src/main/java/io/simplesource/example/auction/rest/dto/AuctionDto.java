@@ -5,47 +5,35 @@ import java.math.BigDecimal;
 
 public final class AuctionDto {
     @NotNull
-    private String creator;
+    private final String creator;
     @NotNull
-    private String title;
+    private final String title;
     @NotNull
-    private String description;
+    private final String description;
     @NotNull
-    private BigDecimal reservePrice;
+    private final BigDecimal reservePrice;
+
+    public AuctionDto(@NotNull String creator, @NotNull String title, @NotNull String description, @NotNull BigDecimal reservePrice) {
+        this.creator = creator;
+        this.title = title;
+        this.description = description;
+        this.reservePrice = reservePrice;
+    }
 
     public String getCreator() {
         return creator;
-    }
-
-    public AuctionDto setCreator(String creator) {
-        this.creator = creator;
-        return this;
     }
 
     public String getTitle() {
         return title;
     }
 
-    public AuctionDto setTitle(String title) {
-        this.title = title;
-        return this;
-    }
-
     public String getDescription() {
         return description;
-    }
-
-    public AuctionDto setDescription(String description) {
-        this.description = description;
-        return this;
     }
 
     public BigDecimal getReservePrice() {
         return reservePrice;
     }
 
-    public AuctionDto setReservePrice(BigDecimal reservePrice) {
-        this.reservePrice = reservePrice;
-        return this;
-    }
 }
