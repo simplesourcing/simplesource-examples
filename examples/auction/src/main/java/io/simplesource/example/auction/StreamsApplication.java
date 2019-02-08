@@ -1,7 +1,7 @@
 package io.simplesource.example.auction;
 
 import io.simplesource.example.auction.account.avro.AccountAvroMappers;
-import io.simplesource.example.auction.account.command.AccountMappedAggregate;
+import io.simplesource.example.auction.aggregate.AccountAggregate;
 import io.simplesource.kafka.dsl.EventSourcedApp;
 import io.simplesource.kafka.dsl.KafkaConfig;
 import org.apache.avro.Conversions;
@@ -21,7 +21,7 @@ public class StreamsApplication {
                 .withKafkaApplicationId("account_app")
                 .withKafkaBootstrap(BOOTSTRAP_SERVERS)
             .build())
-            .addAggregate(AccountMappedAggregate.createSpec(
+            .addAggregate(AccountAggregate.createSpec(
                     ACCOUNT_AGGREGATE_NAME,
                     AccountAvroMappers.createAggregateSerdes(SCHEMA_REGISTRY_URL),
                     accountResourceNamingStrategy(),

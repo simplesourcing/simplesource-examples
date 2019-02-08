@@ -2,9 +2,8 @@ package io.simplesource.example.auction.account.query.projection;
 
 import com.google.common.collect.ImmutableList;
 import io.simplesource.api.Aggregator;
-import io.simplesource.example.auction.account.domain.AccountEvents;
-import io.simplesource.example.auction.account.domain.AccountEvents.AccountEvent;
-import io.simplesource.example.auction.account.domain.AccountEvents.AccountTransactionEvent;
+import io.simplesource.example.auction.account.event.AccountEvent;
+import io.simplesource.example.auction.account.event.AccountEvent.AccountTransactionEvent;
 import io.simplesource.example.auction.account.domain.AccountKey;
 import io.simplesource.example.auction.account.domain.AccountTransactionKey;
 import io.simplesource.example.auction.account.domain.Reservation;
@@ -21,8 +20,8 @@ import static com.google.common.collect.ImmutableList.of;
 
 public final class AccountTransactionProjectionStreamTopology implements KStreamProjectionTopology {
     private static final String STATE_STORE_NAME_SEPARATOR = "_";
-    private static final ImmutableList<Class> ACCOUNT_TRANSACTION_EVENT_TYPES = of(AccountEvents.FundsReserved.class,
-            AccountEvents.FundsReservationCancelled.class, AccountEvents.ReservationConfirmed.class);
+    private static final ImmutableList<Class> ACCOUNT_TRANSACTION_EVENT_TYPES = of(AccountEvent.FundsReserved.class,
+            AccountEvent.FundsReservationCancelled.class, AccountEvent.ReservationConfirmed.class);
 
     private final Supplier<Optional<Reservation>> projectionValueInitializer = Optional::empty;
     private final ProjectionSpec<AccountTransactionKey, Optional<Reservation>> projectionSpec;
@@ -43,7 +42,7 @@ public final class AccountTransactionProjectionStreamTopology implements KStream
     }
 
     @Override
-    public void addTopology(final KStream<AccountKey, ValueWithSequence<AccountEvents.AccountEvent>> accountEventStream) {
+    public void addTopology(final KStream<AccountKey, ValueWithSequence<AccountEvent>> accountEventStream) {
         KGroupedStream<AccountTransactionKey, ValueWithSequence<AccountEvent>> accountTransactionEventStream = accountEventStream
                 .filter((k, v) -> isAccountTransactionEvent(v.value()))
                 .groupBy(this::accountTransactionKey, Serialized.with(writeKeySerde, readValueSerde));
@@ -64,11 +63,11 @@ public final class AccountTransactionProjectionStreamTopology implements KStream
     }
 
     private AccountTransactionKey accountTransactionKey(AccountKey k, ValueWithSequence<AccountEvent> v) {
-        AccountEvents.AccountTransactionEvent accountTransactionEvent = (AccountEvents.AccountTransactionEvent) v.value();
+        AccountEvent.AccountTransactionEvent accountTransactionEvent = (AccountEvent.AccountTransactionEvent) v.value();
         return new AccountTransactionKey(k, accountTransactionEvent.getReservationId());
     }
 
-    private boolean isAccountTransactionEvent(AccountEvents.AccountEvent domainEvent) {
+    private boolean isAccountTransactionEvent(AccountEvent domainEvent) {
         return ACCOUNT_TRANSACTION_EVENT_TYPES.contains(domainEvent.getClass());
     }
 }

@@ -2,10 +2,10 @@ package io.simplesource.example.auction.account.query.projection;
 
 import io.simplesource.api.Aggregator;
 import io.simplesource.dsl.AggregatorBuilder;
-import io.simplesource.example.auction.account.domain.AccountEvents.AccountTransactionEvent;
-import io.simplesource.example.auction.account.domain.AccountEvents.FundsReservationCancelled;
-import io.simplesource.example.auction.account.domain.AccountEvents.FundsReserved;
-import io.simplesource.example.auction.account.domain.AccountEvents.ReservationConfirmed;
+import io.simplesource.example.auction.account.event.AccountEvent.AccountTransactionEvent;
+import io.simplesource.example.auction.account.event.AccountEvent.FundsReservationCancelled;
+import io.simplesource.example.auction.account.event.AccountEvent.FundsReserved;
+import io.simplesource.example.auction.account.event.AccountEvent.ReservationConfirmed;
 import io.simplesource.example.auction.account.domain.Reservation;
 
 import java.util.Optional;

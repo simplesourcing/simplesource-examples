@@ -1,9 +1,11 @@
 package io.simplesource.example.auction.account.query.projection;
 
 import io.simplesource.example.auction.account.avro.AccountAvroMappers;
-import io.simplesource.example.auction.account.command.AccountMappedAggregate;
+import io.simplesource.example.auction.account.event.AccountEventHandler;
+import io.simplesource.example.auction.aggregate.AccountAggregate;
 import io.simplesource.example.auction.account.domain.*;
-import io.simplesource.example.auction.account.domain.AccountEvents.AccountEvent;
+import io.simplesource.example.auction.account.event.AccountEvent;
+import io.simplesource.example.auction.account.event.AccountEvent;
 import io.simplesource.kafka.dsl.KafkaConfig;
 import io.simplesource.kafka.model.ValueWithSequence;
 import io.simplesource.kafka.spec.AggregateSpec;
@@ -80,7 +82,7 @@ public final class AccountProjectionStreamApp {
                         AccountProjectionAvroMappers.ACCOUNT_TRANSACTION_PROJECTION_MAPPER);
 
 
-        return of(new AccountProjectionStreamTopology(accountProjectionSpec, AccountEvents.getAggregator()),
+        return of(new AccountProjectionStreamTopology(accountProjectionSpec, AccountEventHandler.instance),
                 new AccountTransactionProjectionStreamTopology(accountTransactionProjectionSpec, accountTransactionEventAggregator()));
     }
 
@@ -100,7 +102,7 @@ public final class AccountProjectionStreamApp {
     }
 
     private static AggregateSpec<AccountKey, ?, AccountEvent, ?> accountAggregateSpec() {
-        return AccountMappedAggregate.createSpec(
+        return AccountAggregate.createSpec(
                 ACCOUNT_AGGREGATE_NAME,
                 AccountAvroMappers.createAggregateSerdes(SCHEMA_REGISTRY_URL),
                 accountResourceNamingStrategy(),

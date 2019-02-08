@@ -1,7 +1,7 @@
 package io.simplesource.example.auction.account.avro;
 
-import io.simplesource.example.auction.account.domain.AccountCommand;
-import io.simplesource.example.auction.account.domain.AccountEvents;
+import io.simplesource.example.auction.account.command.AccountCommand;
+import io.simplesource.example.auction.account.event.AccountEvent;
 import io.simplesource.example.auction.account.domain.AccountKey;
 import io.simplesource.example.auction.account.domain.ReservationId;
 import io.simplesource.example.auction.account.wire.*;
@@ -23,8 +23,8 @@ import static io.simplesource.kafka.serialization.avro.AvroSpecificGenericMapper
 import static java.util.stream.Collectors.toList;
 
 public final class AccountAvroMappers {
-    public static AggregateSerdes<AccountKey, AccountCommand, AccountEvents.AccountEvent, Optional<io.simplesource.example.auction.account.domain.Account>> createAggregateSerdes(String schemaRegistryUrl) {
-        final AggregateSerdes<AccountKey, AccountCommand, AccountEvents.AccountEvent, Optional<io.simplesource.example.auction.account.domain.Account>> avroAggregateSerdes =
+    public static AggregateSerdes<AccountKey, AccountCommand, AccountEvent, Optional<io.simplesource.example.auction.account.domain.Account>> createAggregateSerdes(String schemaRegistryUrl) {
+        final AggregateSerdes<AccountKey, AccountCommand, AccountEvent, Optional<io.simplesource.example.auction.account.domain.Account>> avroAggregateSerdes =
                 new AvroAggregateSerdes<>(
                         keyMapper, buildCommandMapper(),  buildEventMapper(), aggregateMapper,
                         schemaRegistryUrl, false,
@@ -78,38 +78,38 @@ public final class AccountAvroMappers {
         return io.simplesource.example.auction.account.domain.Reservation.Status.valueOf(status);
     }
 
-    private static GenericMapper<AccountEvents.AccountEvent, GenericRecord> buildEventMapper() {
+    private static GenericMapper<AccountEvent, GenericRecord> buildEventMapper() {
         DomainMapperBuilder builder = new DomainMapperBuilder(new DomainMapperRegistry());
 
-        builder.mapperFor(AccountEvents.AccountCreated.class, AccountCreated.class)
+        builder.mapperFor(AccountEvent.AccountCreated.class, AccountCreated.class)
                 .toSerialized(event -> new AccountCreated(event.username(), event.initialFunds().getAmount()))
-                .fromSerialized(event -> new AccountEvents.AccountCreated(event.getUsername(), Money.valueOf(event.getInitialAmount())))
+                .fromSerialized(event -> new AccountEvent.AccountCreated(event.getUsername(), Money.valueOf(event.getInitialAmount())))
                 .register();
 
-        builder.mapperFor(AccountEvents.AccountUpdated.class, AccountUpdated.class)
+        builder.mapperFor(AccountEvent.AccountUpdated.class, AccountUpdated.class)
                 .toSerialized(event -> new AccountUpdated(event.username()))
-                .fromSerialized(event -> new AccountEvents.AccountUpdated(event.getUsername()))
+                .fromSerialized(event -> new AccountEvent.AccountUpdated(event.getUsername()))
                 .register();
 
-        builder.mapperFor(AccountEvents.FundsAdded.class, FundsAdded.class)
+        builder.mapperFor(AccountEvent.FundsAdded.class, FundsAdded.class)
                 .toSerialized(event -> new FundsAdded(event.addedFunds().getAmount()))
-                .fromSerialized(event -> new AccountEvents.FundsAdded(Money.valueOf(event.getAmount())))
+                .fromSerialized(event -> new AccountEvent.FundsAdded(Money.valueOf(event.getAmount())))
                 .register();
 
-        builder.mapperFor(AccountEvents.FundsReserved.class, FundsReserved.class)
+        builder.mapperFor(AccountEvent.FundsReserved.class, FundsReserved.class)
                 .toSerialized(event -> new FundsReserved(event.reservationId().asString(),  event.description(), event.amount().getAmount()))
-                .fromSerialized(event -> new AccountEvents.FundsReserved(new ReservationId(event.getReservationId()),
+                .fromSerialized(event -> new AccountEvent.FundsReserved(new ReservationId(event.getReservationId()),
                         event.getDescription(), Money.valueOf(event.getAmount())))
                 .register();
 
-        builder.mapperFor(AccountEvents.FundsReservationCancelled.class, ReservationCancelled.class)
+        builder.mapperFor(AccountEvent.FundsReservationCancelled.class, ReservationCancelled.class)
                 .toSerialized(event -> new ReservationCancelled(event.reservationId().asString()))
-                .fromSerialized(event -> new AccountEvents.FundsReservationCancelled(new ReservationId(event.getReservationId())))
+                .fromSerialized(event -> new AccountEvent.FundsReservationCancelled(new ReservationId(event.getReservationId())))
                 .register();
 
-        builder.mapperFor(AccountEvents.ReservationConfirmed.class, FundsReleased.class)
+        builder.mapperFor(AccountEvent.ReservationConfirmed.class, FundsReleased.class)
                 .toSerialized(event -> new FundsReleased(event.reservationId().asString(), event.amount().getAmount()))
-                .fromSerialized(event -> new AccountEvents.ReservationConfirmed(new ReservationId(event.getReservationId()),
+                .fromSerialized(event -> new AccountEvent.ReservationConfirmed(new ReservationId(event.getReservationId()),
                         Money.valueOf(event.getAmount())))
                 .register();
 

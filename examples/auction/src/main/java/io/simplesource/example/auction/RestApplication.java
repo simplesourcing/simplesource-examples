@@ -3,7 +3,7 @@ package io.simplesource.example.auction;
 import io.simplesource.api.CommandAPI;
 import io.simplesource.api.CommandAPISet;
 import io.simplesource.example.auction.account.avro.AccountAvroMappers;
-import io.simplesource.example.auction.account.domain.AccountCommand;
+import io.simplesource.example.auction.account.command.AccountCommand;
 import io.simplesource.example.auction.account.domain.AccountKey;
 import io.simplesource.example.auction.account.query.projection.AccountProjectionStreamApp;
 import io.simplesource.example.auction.account.query.repository.AccountRepository;
