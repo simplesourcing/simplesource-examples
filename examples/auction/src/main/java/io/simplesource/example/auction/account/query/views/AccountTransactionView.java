@@ -14,6 +14,8 @@ public final class AccountTransactionView {
 
     @Field("_id.accountId")
     private String accountId;
+    @Field("_id.reservationId")
+    private String reservationId;
     @Field("description")
     private String description;
     @Field("amount")
@@ -29,6 +31,10 @@ public final class AccountTransactionView {
     public AccountTransactionView setAccountId(String accountId) {
         this.accountId = accountId;
         return this;
+    }
+
+    public String getReservationId() {
+        return reservationId;
     }
 
     public String getDescription() {

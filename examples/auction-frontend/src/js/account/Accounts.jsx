@@ -31,7 +31,7 @@ const Accounts = ( { accounts, accountsFetchError, onCreate } ) => (
                 </thead>
                 <tbody>{
                     accounts.map( acc => (
-                        <AccountInfo key={ acc.accountId } { ...acc } />
+                        <AccountInfo key={ acc.id } { ...acc } />
                     ) )
                 }
                 </tbody>
