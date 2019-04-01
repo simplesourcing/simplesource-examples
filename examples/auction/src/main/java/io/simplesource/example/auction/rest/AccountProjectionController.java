@@ -29,8 +29,6 @@ public final class AccountProjectionController extends BaseController {
     @Autowired
     private AccountRepository accountRepository;
     @Autowired
-    private AccountEntityToDtoMapper accountEntityToDtoMapper;
-    @Autowired
     private AccountReadService accountReadService;
 
     @RequestMapping(value = "/{accountId}/transactions", method = RequestMethod.GET)
@@ -44,10 +42,6 @@ public final class AccountProjectionController extends BaseController {
     public ResponseEntity accountDetails(@NotNull @PathVariable UUID accountId) {
         Optional<AccountView> accountDetails = accountRepository.findByAccountId(accountId.toString());
 
-        return accountDetails.map(this::toAccountDto).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-    }
-
-    private AccountDetailsDto toAccountDto(AccountView entity) {
-        return accountEntityToDtoMapper.toDto(entity);
+        return accountDetails.map(AccountEntityToDtoMapper::toDto).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 }
