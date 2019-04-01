@@ -2,6 +2,7 @@ package io.simplesource.example.user;
 
 import io.simplesource.api.CommandAPI;
 import io.simplesource.api.CommandError;
+import io.simplesource.api.CommandId;
 import io.simplesource.data.FutureResult;
 import io.simplesource.data.NonEmptyList;
 import io.simplesource.data.Sequence;
@@ -25,18 +26,18 @@ public final class UserDomainCommandExample {
 
         return commandAPI
             .publishAndQueryCommand(new CommandAPI.Request<>(
+                CommandId.random(),
                 key,
                 Sequence.first(),
-                UUID.randomUUID(),
                 new UserCommand.InsertUser(firstName, lastName)),
                 Duration.ofMinutes(2L)
             )
             .flatMap(sequences -> {
                 logger.info("Received result {} new sequences", sequences);
                 return commandAPI.publishAndQueryCommand(new CommandAPI.Request<>(
+                    CommandId.random(),
                     key,
                     sequences,
-                    UUID.randomUUID(),
                     new UserCommand.UpdateName("Sarah Jones", lastName)),
                     Duration.ofMinutes(2L)
                 );
