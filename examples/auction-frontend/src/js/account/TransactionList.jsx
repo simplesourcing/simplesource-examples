@@ -5,7 +5,7 @@ const TransactionList = ( { transactions } ) => (
     <div>
         <Grid>
             { transactions.map( trans => (
-                <Row key={ trans.id }>
+                <Row key={ trans.reservationId }>
                     <Col xs={ 3 }>{ trans.description }</Col>
                     <Col xs={ 3 }>{ trans.amount }</Col>
                     <Col xs={ 3 }>{ trans.status }</Col>
