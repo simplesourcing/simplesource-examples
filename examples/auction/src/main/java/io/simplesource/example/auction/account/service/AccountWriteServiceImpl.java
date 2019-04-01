@@ -2,6 +2,7 @@ package io.simplesource.example.auction.account.service;
 
 import io.simplesource.api.CommandAPI;
 import io.simplesource.api.CommandError;
+import io.simplesource.api.CommandId;
 import io.simplesource.data.FutureResult;
 import io.simplesource.data.NonEmptyList;
 import io.simplesource.data.Result;
@@ -171,8 +172,8 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                                                                                                    Sequence sequence, C command,
                                                                                                    Duration duration) {
 
-        FutureResult<CommandError, Sequence> commandResult = accountCommandAPI.publishAndQueryCommand(new CommandAPI.Request<>(accountKey,
-                sequence, UUID.randomUUID(), command), duration);
+        FutureResult<CommandError, Sequence> commandResult = accountCommandAPI.publishAndQueryCommand(new CommandAPI.Request<AccountKey, AccountCommand>(CommandId.random(),
+                accountKey, sequence, command), duration);
 
         Function<NonEmptyList<CommandError>, Result<AccountError, Sequence>> failureMapFunc =
                 ers -> Result.failure(ers.map(COMMAND_ERROR_TO_ACCOUNT_ERROR_FUNCTION));
