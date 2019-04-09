@@ -4,7 +4,7 @@ import {
     withProps,
     setDisplayName,
 } from 'recompose'
-import { withPropsLog, omitProps } from '../hocs/utils'
+import { withPropsLog, omitProps } from './utils'
 
 /**
  * Takes an array of field definitions and creates state and handlers for each

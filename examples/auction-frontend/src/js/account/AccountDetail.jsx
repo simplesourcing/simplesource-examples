@@ -8,22 +8,29 @@ import withSingleAccountDetail from './singleAccountDetail'
 import { UserNameDetailDisplay, UserNameDetailEdit } from './UserNameDetail.jsx'
 import ReservationList from './ReservationList.jsx'
 import fetchToProp from '../hocs/fetchToProp'
-import { getAccountTransactions } from '../api/auctionApi'
+import { getAccountTransactions, getAuctions } from '../api/auctionApi'
 import TransactionList from './TransactionList.jsx'
+import AuctionList from '../auction/AuctionList'
 
 const AccountDetail = ( {
     account: { userName, funds, availableFunds, id, draftReservations: reservations },
-    transactions, transactionsFetchError, userEditable, startUserEdit, endUserEdit, reserveFunds, addFunds, refreshFetch
+    transactions, transactionsFetchError, auctions, auctionsFetchError,
+    userEditable, startUserEdit, endUserEdit, reserveFunds, addFunds, refreshFetch, createAuction
 } ) => (
     <div>
-        <Link to={ routes.accounts }><h3>Accounts</h3></Link>
+        <h3>Welcome {userName}</h3>
         <Grid>
             {userEditable ?
                 <UserNameDetailEdit initialUserName={ userName } accountId={ id } endEdit={ endUserEdit } /> :
                 <UserNameDetailDisplay userName={ userName } startEdit={ startUserEdit } />}
             <Row>
+                <Col xs={ 3 }>User ID</Col>
+                <Col xs={ 6 }>{id}</Col>
+            </Row>
+            <Row>
                 <Col xs={ 3 }>Funds</Col>
                 <Col xs={ 3 }>{funds}</Col>
+                <Col xs={ 3 }><Button onClick={ addFunds }>Add Funds</Button></Col>
             </Row>
             <Row>
                 <Col xs={ 3 }>Available</Col>
@@ -45,7 +52,19 @@ const AccountDetail = ( {
             </div>
         }
         <br />
-        <Button onClick={ addFunds }>Add Funds</Button><Button onClick={ reserveFunds }>Reserve Funds</Button>
+        {
+            auctionsFetchError && <div><h5>Error fetching auctions</h5>{ auctionsFetchError }</div>
+        }
+        {
+            auctions && auctions.length > 0 && <div>
+                <h4>Auctions</h4>
+                <AuctionList auctions={ auctions } account={ id }/>
+            </div>
+        }
+        <br />
+        <Button onClick={ createAuction }>Create auction</Button>
+        <br />
+        <Link to={ routes.accounts }>Back</Link>
     </div> )
 
 export default compose(
@@ -54,6 +73,8 @@ export default compose(
     withState( 'userEditable', 'setUserEditable', false ),
     fetchToProp( 'transactions', 'transactionsFetchError', 2, 1000 )( getAccountTransactions ),
     renameProp( 'refreshFetch', 'refreshTransactions' ),
+    fetchToProp( 'auctions', 'auctionsFetchError', 2, 1000 )( getAuctions ),
+    renameProp( 'refreshFetch', 'refreshAuctions' ),
     withHandlers( {
         startUserEdit: ( { setUserEditable } ) => () => setUserEditable( true ),
         endUserEdit: ( { setUserEditable, refreshDetails } ) => ( refresh ) => {
@@ -64,11 +85,14 @@ export default compose(
             history.push( routes.accountFundsReserve.replace( ':id', accountId ) ),
         addFunds: ( { history, accountId } )  => () =>
             history.push( routes.accountFundsAdd.replace( ':id', accountId ) ),
-        refreshFetch: ( { refreshTransactions, refreshDetails } ) => () => {
+        createAuction: ( { history, accountId } )  => () =>
+            history.push( routes.auctionCreate.replace( ':id', accountId ) ),
+        refreshFetch: ( { refreshTransactions, refreshDetails, refreshAuctions } ) => () => {
             refreshDetails()
             refreshTransactions()
+            refreshAuctions()
         }
     } ),
-    omitProps( [ 'refreshDetails', 'refreshTransactions' ] ),
+    omitProps( [ 'refreshDetails', 'refreshTransactions', 'refreshAuctions' ] ),
     withPropsLog( false )
 )( AccountDetail )

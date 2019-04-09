@@ -6,7 +6,12 @@ import {
     API_ADD_FUNDS,
     API_CANCEL_RESERVATION,
     API_CONFIRM_RESERVATION,
-    API_ACCOUNT_TRANSACTIONS
+    API_ACCOUNT_TRANSACTIONS,
+    API_AUCTIONS,
+    API_CREATE_AUCTION,
+    API_START_AUCTION,
+    API_COMPLETE_AUCTION,
+    API_PLACE_BID,
 } from '../settings/api'
 import { sendGet, sendPost, sendPut, sendDelete } from './utils'
 
@@ -57,3 +62,42 @@ export const updateUserName = ( { accountId, userName } ) =>
 
 export const getAccountTransactions = ( { accountId } ) =>
     sendGet( API_ACCOUNT_TRANSACTIONS( accountId ) ).then( result => result )
+
+export const getAuctions = ( ) => sendGet( API_AUCTIONS( ) ).then( result => {
+    const { _embedded } = result
+    return _embedded.auctions
+} )
+
+export const getAuctionDetail = ( { auctionId } ) => sendGet( API_AUCTIONS( ) ).then( result => {
+    const { _embedded } = result
+    const auctions = _embedded.auctions
+    return auctions.find( auc => auc.id === auctionId )
+} )
+
+export const createAuction = ( { auctionId, accountId, title, description, reservePrice, duration } ) =>
+    sendPost( API_CREATE_AUCTION( ), {
+        auctionId,
+        auctionDto: {
+            creator: accountId,
+            title,
+            description,
+            reservePrice,
+            duration
+        }
+    } )
+
+
+export const startAuction = ( { auctionId } ) =>
+    sendPost( API_START_AUCTION( auctionId ), {
+    } )
+
+export const completeAuction = ( { auctionId } ) =>
+    sendPost( API_COMPLETE_AUCTION( auctionId ), {
+    } )
+
+export const placeBid = ( { auctionId, reservationId, accountId, amount } ) =>
+    sendPost( API_PLACE_BID( auctionId ), {
+        reservationId,
+        accountId,
+        amount
+    } )

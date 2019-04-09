@@ -1,0 +1,136 @@
+@namespace("io.simplesource.example.auction.account.wire")
+protocol AccountSubsystem {
+
+  ///////////////
+  // Key
+  ///////////////
+  record AccountId {
+    string id;  // UUID
+  }
+
+  ///////////////
+  // Aggregate domain
+  ///////////////
+  enum ReservationStatus {
+    DRAFT,
+    CANCELLED,
+    CONFIRMED
+  }
+
+  record Reservation {
+    string reservationId;
+    long timestamp;
+    string auction;
+    string description;
+    decimal(12,4) amount;
+    //TODO Use enum once this Avro issue is fixed https://issues.apache.org/jira/browse/AVRO-1810
+    //ReservationStatus status = "DRAFT";
+    string status;
+  }
+
+  record Account {
+    string username;
+    decimal(12,4) funds;
+    array <Reservation> reservations = [];
+  }
+
+  ///////////////
+  // Commands
+  ///////////////
+  record CreateAccount {
+    string username;
+    decimal(12,4) initialAmount;
+  }
+
+  record UpdateAccount {
+    string username;
+  }
+
+  record AddFunds {
+    decimal(12,4) amount;
+  }
+
+  record ReserveFunds {
+    string reservationId;
+    long timestamp;
+    string auction;
+    string description;
+    decimal(12,4) amount;
+  }
+
+  record CancelReservation {
+    string reservationId;
+  }
+
+  record CommitReservation {
+    string reservationId;
+    decimal(12,4) amount;
+  }
+
+  ///////////////
+  // Sub-sagas
+  ///////////////
+
+  record AccountSagaCommand {
+    string accountKey;
+    union {CreateAccount,UpdateAccount,ReserveFunds,CancelReservation,CommitReservation} command;
+  }
+
+  ///////////////
+  // Events
+  ///////////////
+  record AccountCreated {
+    string username;
+    decimal(12,4) initialAmount;
+  }
+
+  record AccountUpdated {
+    string username;
+  }
+
+  record FundsAdded  {
+    decimal(12,4) amount;
+  }
+
+  record FundsReserved  {
+    string reservationId;
+    long timestamp;
+    string auction;
+    string description;
+    decimal(12,4) amount;
+  }
+
+  record ReservationCancelled {
+    string reservationId;
+  }
+
+  record FundsReleased  {
+    string reservationId;
+    decimal(12,4) amount;
+  }
+
+  record AccountEvent {
+    union {AccountCreated, FundsAdded, FundsReserved, ReservationCancelled, FundsReleased} event;
+  }
+
+  record AccountTransactionEvent {
+    union {FundsReserved, ReservationCancelled, FundsReleased} event;
+  }
+
+  ///////////////
+  // Additional projections
+  ///////////////
+  record AccountTransactionId {
+    string accountId;
+    string reservationId;
+  }
+
+  record AccountTransaction {
+    string reservationId;
+    long timestamp;
+    string auction;
+    string description;
+    string amount;
+    string status;
+  }
+}

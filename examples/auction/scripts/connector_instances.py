@@ -1,10 +1,10 @@
-ACCOUNT_TOPIC_NAME = "auction_account_projection"
+ACCOUNT_TOPIC_NAME = "auction_avro_account-aggregate"
 ACCOUNT_CONNECT_INSTANCE_NAME = "Auction-Accounts-MongoDb-Sink"
 
 ACCOUNT_TRANSACTIONS_TOPIC_NAME = "auction_account_transactions_projection"
 ACCOUNT_TRANSACTIONS_CONNECT_INSTANCE_NAME = "Auction-Account-Transactions-MongoDb-Sink"
 
-AUCTION_TOPIC_NAME = "auction_auction_projection"
+AUCTION_TOPIC_NAME = "auction_avro_auction-aggregate"
 AUCTION_CONNECT_INSTANCE_NAME = "Auction-Auctions-MongoDb-Sink"
 
 topic_connect_parameters = {
@@ -12,14 +12,26 @@ topic_connect_parameters = {
         "mongodb.collection": "auction_account",
         "name": ACCOUNT_CONNECT_INSTANCE_NAME,
         "mongodb.document.id.strategy": "at.grahsl.kafka.connect.mongodb.processor.id.strategy.ProvidedInKeyStrategy",
-        "transforms": "RenameId",
+        "transforms": "RenameId,RenameValue",
         "transforms.RenameId.type": "org.apache.kafka.connect.transforms.ReplaceField$Key",
-        "transforms.RenameId.renames": "id:_id"
+        "transforms.RenameId.renames": "id:_id",
+        "transforms.RenameValue.type": "org.apache.kafka.connect.transforms.ReplaceField$Value",
+        "transforms.RenameValue.renames": "aggregate_update:value"
     },
     ACCOUNT_TRANSACTIONS_TOPIC_NAME: {
         "mongodb.collection": "auction_account_transactions",
         "name": ACCOUNT_TRANSACTIONS_CONNECT_INSTANCE_NAME,
         "mongodb.document.id.strategy": "at.grahsl.kafka.connect.mongodb.processor.id.strategy.FullKeyStrategy",
+    },
+    AUCTION_TOPIC_NAME: {
+        "mongodb.collection": "auction_auction",
+        "name": AUCTION_CONNECT_INSTANCE_NAME,
+        "mongodb.document.id.strategy": "at.grahsl.kafka.connect.mongodb.processor.id.strategy.ProvidedInKeyStrategy",
+        "transforms": "RenameId,RenameValue",
+        "transforms.RenameId.type": "org.apache.kafka.connect.transforms.ReplaceField$Key",
+        "transforms.RenameId.renames": "id:_id",
+        "transforms.RenameValue.type": "org.apache.kafka.connect.transforms.ReplaceField$Value",
+        "transforms.RenameValue.renames": "aggregate_update:value"
     }
 }
 

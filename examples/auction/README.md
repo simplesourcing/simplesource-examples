@@ -1,6 +1,15 @@
+# Simple Sourcing - Auction Example
+
+[Simple Sourcing](http://simplesource.io/docs_home.html) is an API for building event sourcing systems where the data is stored in Kafka.
+
+The Auction Example is a multi-module project that demonstrates the logical separation between the various stream
+processors comprising a typical Simple Sourcing architecture, with each module running in a separate JVM process.
+
+This allows a loosely coupled deployment whereby each component can be scaled independently of each other.
+
 #### Running the application
 
-From the `examples/auction` folder:
+From the project's root folder:
 
 1. Start the backend dependencies in Docker
     
@@ -8,15 +17,21 @@ From the `examples/auction` folder:
     docker-compose up
     ```
     
-2. Start the backend application:
+2. Start the backend applications:
     
     ```bash
-    ./run.sh
+    ./runServer.sh
+    ./runSagaActionProcessor.sh
+    ./runSagaCoordinator.sh
+    ./runProjections.sh
+    ./runClient.sh
     ```
-    
+
+If you are running the application for the first time the *Server* and *Saga* processes should be started first as they create any new Kafka topics, before the Projection and Client services consume from them.
+
 3. Run the front end in Docker:
    
-   Change to the `examples/auction-frontend` folder:
+   Change to the `auction-frontend` folder:
    
    ```bash
    docker-compose up 

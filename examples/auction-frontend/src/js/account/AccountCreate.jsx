@@ -6,6 +6,8 @@ import { withPropsLog } from '../hocs/utils'
 import randomUuid from '../utils/uuid'
 import { createAccount } from '../api/auctionApi'
 import FieldGroup from '../components/FieldGroup.jsx'
+import routes from "../enum/routes";
+import {Link} from "react-router-dom";
 
 const AccountCreate = ( { fields, onSubmit } ) => (
     <div>
@@ -24,6 +26,7 @@ const AccountCreate = ( { fields, onSubmit } ) => (
                 onChange={ ( x ) => fields.funds.onChange( x.target.value ) }
             />
             <button type="button" className="btn btn-default btn-lg" onClick={ onSubmit }>Submit</button>
+            <Link to={ routes.accounts }>Back</Link>
         </form>
     </div>
 )

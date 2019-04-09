@@ -74,7 +74,8 @@ td a:before {
   height: 20px; }
 
 input.form-control {
-  padding: 26px; }
+  height: 52px;
+  padding: 0px 26px; }
 
 a {
   color: #002e64; }
