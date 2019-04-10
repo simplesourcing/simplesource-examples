@@ -4,7 +4,7 @@ export default {
     accountCreate: '/accounts/create',
     accountDetail: '/accounts/:id',
     accountTransactions: '/accounts/:id/transactions',
-    accountFundsReserve: '/accounts/:id/reserve',
     accountFundsAdd: '/accounts/:id/funds',
-    reservationConfirm: '/accounts/:id/reservations/:resId/confirm',
+    auctionCreate: '/accounts/:id/auctions/create',
+    auctionDetail: '/accounts/:id/auctions/:auctionId',
 }

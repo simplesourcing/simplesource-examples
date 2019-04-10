@@ -1,0 +1,39 @@
+@namespace("io.simplesource.example.auction.allocation.wire")
+protocol AllocationSubsystem {
+
+  ///////////////
+  // Key
+  ///////////////
+  record AllocationId {
+    string id;
+  }
+
+  record Allocated {
+  }
+
+  ///////////////
+  // Commands
+  ///////////////
+  record Claim {
+  }
+
+  record Release {
+  }
+
+  ///////////////
+  // Wraps commands that can be used as a sub-saga
+  ///////////////
+  record AllocationSagaCommand {
+    string allocationId;
+    union {Claim,Release} command;
+  }
+
+  ///////////////
+  // Events
+  ///////////////
+  record Claimed {
+  }
+
+  record Released {
+  }
+}

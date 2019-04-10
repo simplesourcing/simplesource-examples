@@ -1,0 +1,123 @@
+@namespace("io.simplesource.example.auction.auction.wire")
+protocol AuctionSubsystem {
+
+  record AuctionId {
+    string id;
+  }
+
+  enum AuctionStatus {
+    CREATED,
+    STARTED,
+    COMPLETED,
+    CANCELLED
+  }
+
+  record Bid {
+    string reservationId;
+    long timestamp;
+    string bidder;
+    decimal (12,4) amount;
+  }
+
+  record Auction {
+    string creator;
+    string title;
+    string description;
+    decimal(12,4) reservePrice;
+    long duration;
+    union { null, decimal(12,4) } price = null;
+  //TODO Use enum once this Avro issue is fixed https://issues.apache.org/jira/browse/AVRO-1810
+  //AuctionStatus status;
+    string status;
+    union {null,long} start = null;
+    union {null, string} winner = null;
+    array<Bid> bids = [];
+  }
+
+  ///////////////
+  // Commands
+  ///////////////
+  record CreateAuction {
+    string creator;
+    string title;
+    string description;
+    decimal(12,4) reservePrice;
+    long duration;
+  }
+
+  record StartAuction {
+    long start;
+  }
+
+  record CompleteAuction {
+  }
+
+  record UpdateAuction {
+    string creator;
+    string title;
+    string description;
+    decimal(12,4) reservePrice;
+    long duration;
+  }
+
+  record PlaceBid {
+    string reservationId;
+    long timestamp;
+    string bidder;
+    decimal(12,4) amount;
+  }
+
+  ///////////////
+  // Sub-sagas
+  ///////////////
+
+  record AuctionSagaCommand {
+    string auctionKey;
+    union {CompleteAuction,PlaceBid} command;
+  }
+
+  ///////////////
+  // Events
+  ///////////////
+  record AuctionCreated {
+    string creator;
+    string title;
+    string description;
+    decimal(12,4) reservePrice;
+    long duration;
+  }
+
+  record AuctionStarted {
+    long start;
+  }
+
+  record AuctionCompleted {
+  }
+
+  record AuctionUpdated {
+    string creator;
+    string title;
+    string description;
+    decimal(12,4) reservePrice;
+    long duration;
+  }
+
+  record BidPlaced {
+    string reservationId;
+    long timestamp;
+    string bidder;
+    decimal(12,4) amount;
+  }
+
+  ////////////////
+  // event stream processing result
+  ///////////////
+  record AuctionAvro {
+    string creator;
+    string title;
+    string description;
+    string reservePrice;
+    long duration;
+    string status;
+  }
+}

@@ -4,7 +4,7 @@ const withMessage = ( error ) => {
     try {
         const { data: payload, status } = error
         const data = ( Array.isArray( payload ) && ( payload.length > 0 ) ) ?  payload[ 0 ] : payload
-        const message = `Status: ${status}${data.error ? `\nError: ${data.error}` : ''}${data.message ? `\nMessage: ${data.message.substr( 0, 100 )}` : ''}`
+        const message = `Status: ${status}${data.error ? `\nError: ${data.error}` : ''}${data.errors ? `\nError(s): ${data.errors.map(e => e.message).join()}` : ''}${data.message ? `\nMessage: ${data.message.substr( 0, 100 )}` : ''}`
         return Object.assign( {}, error, { message } )
     }
     catch ( e ) {
