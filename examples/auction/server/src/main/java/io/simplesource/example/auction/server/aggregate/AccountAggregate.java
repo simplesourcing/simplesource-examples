@@ -26,7 +26,7 @@ public final class AccountAggregate {
         return AggregateBuilder.<AccountKey, AccountCommand, AccountEvent, Optional<Account>>newBuilder()
                 .withName(name)
                 .withSerdes(aggregateSerdes)
-                .withInvalidSequenceStrategy(InvalidSequenceStrategy.LastWriteWins)
+                .withInvalidSequenceStrategy(InvalidSequenceStrategy.Strict)
                 .withResourceNamingStrategy(resourceNamingStrategy)
                 .withInitialValue(initialValue)
                 .withAggregator(AccountEventHandler.instance)

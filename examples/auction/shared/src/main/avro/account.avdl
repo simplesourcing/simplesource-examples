@@ -74,6 +74,7 @@ protocol AccountSubsystem {
   record AccountSagaCommand {
     string accountKey;
     union {CreateAccount,UpdateAccount,ReserveFunds,CancelReservation,CommitReservation} command;
+    long sequence;
   }
 
   ///////////////

@@ -5,6 +5,7 @@ import io.simplesource.data.FutureResult;
 import io.simplesource.data.NonEmptyList;
 import io.simplesource.data.Sequence;
 import io.simplesource.example.auction.auction.wire.AuctionStatus;
+import io.simplesource.example.auction.client.repository.AccountRepository;
 import io.simplesource.example.auction.client.repository.AuctionRepository;
 import io.simplesource.example.auction.client.views.AuctionView;
 import io.simplesource.example.auction.command.AuctionCommand;
@@ -35,6 +36,8 @@ class AuctionWriteServiceImplTest {
     @Mock
     private CommandAPI<AuctionKey, AuctionCommand> commandApi;
     @Mock
+    private AccountRepository accountRepository;
+    @Mock
     private AuctionRepository auctionRepository;
     @Mock
     private SagaAPI<GenericRecord> sagaApi;
@@ -47,7 +50,7 @@ class AuctionWriteServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        auctionWriteService = new AuctionWriteServiceImpl(commandApi, sagaApi, auctionRepository);
+        auctionWriteService = new AuctionWriteServiceImpl(commandApi, sagaApi, accountRepository, auctionRepository);
     }
 
     @Test
