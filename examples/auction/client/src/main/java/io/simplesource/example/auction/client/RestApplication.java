@@ -120,9 +120,10 @@ public class RestApplication {
     @Bean
     public AuctionWriteService auctionWriteService(@Qualifier("commandApiSet") CommandAPISet commandApiSet,
                                                    SagaAPI<GenericRecord> sagaAPI,
+                                                   AccountRepository accountRepository,
                                                    AuctionRepository auctionRepository) {
         CommandAPI<AuctionKey, AuctionCommand> commandApi = commandApiSet.getCommandAPI(AUCTION_AGGREGATE_NAME);
-        return new AuctionWriteServiceImpl(commandApi, sagaAPI, auctionRepository);
+        return new AuctionWriteServiceImpl(commandApi, sagaAPI, accountRepository, auctionRepository);
     }
 
     @Bean

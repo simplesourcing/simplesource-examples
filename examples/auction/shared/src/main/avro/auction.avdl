@@ -74,6 +74,7 @@ protocol AuctionSubsystem {
   record AuctionSagaCommand {
     string auctionKey;
     union {CompleteAuction,PlaceBid} command;
+    long sequence;
   }
 
   ///////////////

@@ -17,4 +17,7 @@ public interface AccountRepository extends MongoRepository<AccountView, String> 
     default Optional<AccountView> findByAccountId(String accountId) {
         return findById(accountId);
     }
+
+    @Query("{ 'id': {'$in': ?0}}")
+    List<AccountView> findByAccountIds(List<String> accountIds);
 }

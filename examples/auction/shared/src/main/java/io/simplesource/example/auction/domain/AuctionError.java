@@ -23,6 +23,7 @@ public class AuctionError {
     }
 
     public enum Reason {
+        AccountDoesNotExist,
         AuctionIdAlreadyExist,
         AuctionDoesNotExist,
         InvalidData,

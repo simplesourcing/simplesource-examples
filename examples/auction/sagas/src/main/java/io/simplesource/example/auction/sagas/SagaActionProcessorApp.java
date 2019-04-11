@@ -48,8 +48,7 @@ public class SagaActionProcessorApp {
                 r -> Result.success(AvroSpecificGenericMapper.<AccountSagaCommand>specificDomainMapper().fromGeneric(r)),
                 r -> (GenericRecord) r.getCommand(),
                 r -> AccountKey.of(r.getAccountKey()),
-                // TODO What to do in lieu of extracting the sequence from the command?
-                c -> Sequence.first(),
+                c -> Sequence.position(c.getSequence()),
                 (k, c) -> Optional.empty(),
                 new AvroCommandSerdes(accountAvroMappers.buildKeyMapper(),
                         AvroSpecificGenericMapper.specificDomainMapper(), SCHEMA_REGISTRY_URL, false),
@@ -65,7 +64,7 @@ public class SagaActionProcessorApp {
                 r -> (GenericRecord) r.getCommand(),
                 r -> AuctionKey.of(r.getAuctionKey()),
                 // TODO What to do in lieu of extracting the sequence from the command?
-                c -> Sequence.first(),
+                c -> Sequence.position(c.getSequence()),
                 (k, c) -> Optional.empty(),
                 new AvroCommandSerdes(auctionAvroMappers.buildKeyMapper(),
                         AvroSpecificGenericMapper.specificDomainMapper(), SCHEMA_REGISTRY_URL, false),

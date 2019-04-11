@@ -106,7 +106,7 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                             ActionId.random(),
                             AppShared.ACCOUNT_AGGREGATE_NAME,
                             new AccountSagaCommand(accountKey.asString(), new CreateAccount(
-                                    account.username(), account.funds().getAmount()))
+                                    account.username(), account.funds().getAmount()), 0L)
                     ));
                     Result<SagaError, Saga<GenericRecord>> built = sagaBuilder.build();
                     return built.fold(
@@ -150,7 +150,7 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                                     ActionId.random(),
                                     AppShared.ACCOUNT_AGGREGATE_NAME,
                                     new AccountSagaCommand(accountKey.asString(), new UpdateAccount(
-                                            username))
+                                            username), account.getLastEventSequence())
                             )).andThen(sagaBuilder.addAction(
                                     ActionId.random(),
                                     AppShared.USERNAME_ALLOCATION_AGGREGATE_NAME,

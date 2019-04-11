@@ -15,7 +15,9 @@ import io.simplesource.example.auction.account.wire.ReserveFunds;
 import io.simplesource.example.auction.auction.wire.AuctionSagaCommand;
 import io.simplesource.example.auction.auction.wire.CompleteAuction;
 import io.simplesource.example.auction.auction.wire.PlaceBid;
+import io.simplesource.example.auction.client.repository.AccountRepository;
 import io.simplesource.example.auction.client.repository.AuctionRepository;
+import io.simplesource.example.auction.client.views.AccountView;
 import io.simplesource.example.auction.client.views.AuctionView;
 import io.simplesource.example.auction.client.views.BidView;
 import io.simplesource.example.auction.command.AuctionCommand;
@@ -58,15 +60,18 @@ public class AuctionWriteServiceImpl implements AuctionWriteService {
 
     private final CommandAPI<AuctionKey, AuctionCommand> auctionCommandAPI;
     private final SagaAPI<GenericRecord> sagaAPI;
+    private final AccountRepository accountRepository;
     private final AuctionRepository auctionRepository;
     private final Duration sagaResponseTimeout = Duration.ofMillis(10000);
 
     public AuctionWriteServiceImpl(
             CommandAPI<AuctionKey, AuctionCommand> auctionCommandAPI,
             SagaAPI<GenericRecord> sagaAPI,
+            AccountRepository accountRepository,
             AuctionRepository auctionRepository) {
         this.auctionCommandAPI = auctionCommandAPI;
         this.sagaAPI = sagaAPI;
+        this.accountRepository = accountRepository;
         this.auctionRepository = auctionRepository;
     }
 
@@ -117,35 +122,43 @@ public class AuctionWriteServiceImpl implements AuctionWriteService {
         requireNonNull(auctionKey);
         requireNonNull(bid);
 
+        // TODO Set the sequence numbers to be based on the existing auction...
+        // - Does this need to be done for the action and the account?
+        // - What needs to be done about the undo action?
         Optional<AuctionView> existingAuction = auctionRepository
                 .findById(auctionKey.id().toString());
 
+        Optional<AccountView> existingAccount = accountRepository
+                .findById(bid.bidder().asString());
+
         return existingAuction.map(auction -> {
-            String desc = "Bid " + bid.amount().toString() + " on " + auction.getTitle();
-            SagaDsl.SagaBuilder<GenericRecord> sagaBuilder = SagaDsl.SagaBuilder.create();
-            sagaBuilder.addAction(
-                    ActionId.random(),
-                    AppShared.ACCOUNT_AGGREGATE_NAME,
-                    new AccountSagaCommand(bid.bidder().asString(), new ReserveFunds(
-                            bid.reservationId().asString(), bid.timestamp().toEpochMilli(), auctionKey.asString(), desc, bid.amount().getAmount())),
-                    //// cancel (undo) the reservation if a bid cannot be placed
-                    new AccountSagaCommand(bid.bidder().asString(), new CancelReservation(
-                            bid.reservationId().asString()))
-            ).andThen(sagaBuilder.addAction(
-                    ActionId.random(),
-                    AppShared.AUCTION_AGGREGATE_NAME,
-                    new AuctionSagaCommand(auctionKey.asString(), new PlaceBid(
-                            bid.reservationId().asString(), bid.timestamp().toEpochMilli(), bid.bidder().asString(), bid.amount().getAmount()))
-            ));
-            return sagaBuilder.build().fold(
-                    e -> FutureResult.<AuctionError, SagaResponse>fail(AuctionError.of(AuctionError.Reason.UnknownError)),
-                    s -> {
-                      FutureResult<SagaError, SagaId> response = sagaAPI.submitSaga(SagaRequest.<GenericRecord>of(SagaId.random(), s));
-                      return response
-                            .flatMap(u -> sagaAPI.getSagaResponse(u, sagaResponseTimeout))
-                            .errorMap(e -> AuctionError.of(AuctionError.Reason.CommandError));
-                    }
-            );
+            return existingAccount.map(account -> {
+                String desc = "Bid " + bid.amount().toString() + " on " + auction.getTitle();
+                SagaDsl.SagaBuilder<GenericRecord> sagaBuilder = SagaDsl.SagaBuilder.create();
+                sagaBuilder.addAction(
+                        ActionId.random(),
+                        AppShared.ACCOUNT_AGGREGATE_NAME,
+                        new AccountSagaCommand(bid.bidder().asString(), new ReserveFunds(
+                                bid.reservationId().asString(), bid.timestamp().toEpochMilli(), auctionKey.asString(), desc, bid.amount().getAmount()), account.getLastEventSequence()),
+                        //// cancel (undo) the reservation if a bid cannot be placed
+                        new AccountSagaCommand(bid.bidder().asString(), new CancelReservation(
+                                bid.reservationId().asString()), account.getLastEventSequence()) // TODO Should this be incremented? Conditionally?
+                ).andThen(sagaBuilder.addAction(
+                        ActionId.random(),
+                        AppShared.AUCTION_AGGREGATE_NAME,
+                        new AuctionSagaCommand(auctionKey.asString(), new PlaceBid(
+                                bid.reservationId().asString(), bid.timestamp().toEpochMilli(), bid.bidder().asString(), bid.amount().getAmount()), auction.getLastEventSequence())
+                ));
+                return sagaBuilder.build().fold(
+                        e -> FutureResult.<AuctionError, SagaResponse>fail(AuctionError.of(AuctionError.Reason.UnknownError)),
+                        s -> {
+                          FutureResult<SagaError, SagaId> response = sagaAPI.submitSaga(SagaRequest.<GenericRecord>of(SagaId.random(), s));
+                          return response
+                                .flatMap(u -> sagaAPI.getSagaResponse(u, sagaResponseTimeout))
+                                .errorMap(e -> AuctionError.of(AuctionError.Reason.CommandError));
+                        }
+                );
+            }).orElse(FutureResult.<AuctionError, SagaResponse>fail(AuctionError.of(AuctionError.Reason.AccountDoesNotExist)));
         }).orElse(FutureResult.<AuctionError, SagaResponse>fail(AuctionError.of(AuctionError.Reason.AuctionDoesNotExist)));
     }
 
@@ -162,28 +175,33 @@ public class AuctionWriteServiceImpl implements AuctionWriteService {
                 sagaBuilder.addAction(
                         ActionId.random(),
                         AppShared.AUCTION_AGGREGATE_NAME,
-                        new AuctionSagaCommand(auctionKey.asString(), new CompleteAuction())
+                        new AuctionSagaCommand(auctionKey.asString(), new CompleteAuction(), auction.getLastEventSequence())
                 );
             } else {
                 int numBids = auction.getBids().size();
                 BidView winningBid = auction.getBids().get(numBids - 1);
-                Stream<BidView> losingBids = auction.getBids().stream().limit(numBids - 1);
+                List<BidView> losingBids = auction.getBids().stream().limit(numBids - 1).collect(Collectors.toList());
+                Optional<AccountView> winningAccount = accountRepository.findById(winningBid.getBidder().toString());
+                List<AccountView> losingAccounts = accountRepository.findByAccountIds(losingBids.stream().map(bid -> bid.getBidder()).collect(Collectors.toList()));
                 sagaBuilder.addAction(
                         ActionId.random(),
                         AppShared.AUCTION_AGGREGATE_NAME,
-                        new AuctionSagaCommand(auctionKey.asString(), new CompleteAuction())
+                        new AuctionSagaCommand(auctionKey.asString(), new CompleteAuction(), auction.getLastEventSequence())
                 ).andThen(sagaBuilder.addAction(
                         ActionId.random(),
                         AppShared.ACCOUNT_AGGREGATE_NAME,
                         new AccountSagaCommand(winningBid.getBidder(), new CommitReservation(
-                                winningBid.getReservationId(), winningBid.getAmount()))
+                                winningBid.getReservationId(), winningBid.getAmount()), winningAccount.<Long>map(account -> account.getLastEventSequence()).orElse(0L))
                 ).andThen(
-                        SagaDsl.inParallel((List<SagaDsl.SubSaga<GenericRecord>>) losingBids.<SagaDsl.SubSaga<GenericRecord>>map(b ->
-                                sagaBuilder.addAction(ActionId.random(),
+                        SagaDsl.inParallel((List<SagaDsl.SubSaga<GenericRecord>>) losingBids.stream().<SagaDsl.SubSaga<GenericRecord>>map(b -> {
+                                //
+                                long sequence = losingAccounts.stream().filter(c -> c.getId().equals(b.getBidder())).findFirst().map(c -> c.getLastEventSequence()).orElse(0L);
+                                return sagaBuilder.addAction(ActionId.random(),
                                         AppShared.ACCOUNT_AGGREGATE_NAME,
                                         new AccountSagaCommand(b.getBidder(), new CancelReservation(
-                                                b.getReservationId()))
-                                )
+                                                b.getReservationId()), sequence)
+                                );
+                            }
                         ).collect(Collectors.toList()))
                 ));
             }

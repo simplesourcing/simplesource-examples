@@ -26,7 +26,7 @@ public class AuctionAggregate {
         return AggregateBuilder.<AuctionKey, AuctionCommand, AuctionEvent, Optional<Auction>>newBuilder()
                 .withName(name)
                 .withSerdes(aggregateSerdes)
-                .withInvalidSequenceStrategy(InvalidSequenceStrategy.LastWriteWins)
+                .withInvalidSequenceStrategy(InvalidSequenceStrategy.Strict)
                 .withResourceNamingStrategy(resourceNamingStrategy)
                 .withInitialValue(initialValue)
                 .withAggregator(AuctionEventHandler.instance)
