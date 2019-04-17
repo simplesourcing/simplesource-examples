@@ -19,7 +19,7 @@
         <junit.platform.version>1.0.2</junit.platform.version>
         <quicktheories.version>0.25</quicktheories.version>
         <simplesource.version>0.2.6</simplesource.version>
-        <simplesagas.version>0.1.4</simplesagas.version>
+        <simplesagas.version>0.1.5</simplesagas.version>
     </properties>
 
     <modules>

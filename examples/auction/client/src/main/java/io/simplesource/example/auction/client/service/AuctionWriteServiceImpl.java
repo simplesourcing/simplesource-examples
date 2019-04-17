@@ -33,7 +33,7 @@ import io.simplesource.saga.model.messages.SagaRequest;
 import io.simplesource.saga.model.messages.SagaResponse;
 import io.simplesource.saga.model.saga.SagaError;
 import io.simplesource.saga.model.saga.SagaId;
-import io.simplesource.saga.client.dsl.SagaDsl;
+import io.simplesource.saga.client.dsl.SagaDSL;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.specific.SpecificRecord;
 import org.slf4j.Logger;
@@ -134,7 +134,7 @@ public class AuctionWriteServiceImpl implements AuctionWriteService {
         return existingAuction.map(auction -> {
             return existingAccount.map(account -> {
                 String desc = "Bid " + bid.amount().toString() + " on " + auction.getTitle();
-                SagaDsl.SagaBuilder<GenericRecord> sagaBuilder = SagaDsl.SagaBuilder.create();
+                SagaDSL.SagaBuilder<GenericRecord> sagaBuilder = SagaDSL.SagaBuilder.create();
                 sagaBuilder.addAction(
                         ActionId.random(),
                         AppShared.ACCOUNT_AGGREGATE_NAME,
@@ -170,7 +170,7 @@ public class AuctionWriteServiceImpl implements AuctionWriteService {
                 .findById(auctionKey.id().toString());
 
         Optional<FutureResult<AuctionError, SagaResponse>> result = existingAuction.map(auction -> {
-            SagaDsl.SagaBuilder<GenericRecord> sagaBuilder = SagaDsl.SagaBuilder.create();
+            SagaDSL.SagaBuilder<GenericRecord> sagaBuilder = SagaDSL.SagaBuilder.create();
             if (auction.getBids().isEmpty()) {
                 sagaBuilder.addAction(
                         ActionId.random(),
@@ -193,7 +193,7 @@ public class AuctionWriteServiceImpl implements AuctionWriteService {
                         new AccountSagaCommand(winningBid.getBidder(), new CommitReservation(
                                 winningBid.getReservationId(), winningBid.getAmount()), winningAccount.<Long>map(account -> account.getLastEventSequence()).orElse(0L))
                 ).andThen(
-                        SagaDsl.inParallel((List<SagaDsl.SubSaga<GenericRecord>>) losingBids.stream().<SagaDsl.SubSaga<GenericRecord>>map(b -> {
+                        SagaDSL.inParallel((List<SagaDSL.SubSaga<GenericRecord>>) losingBids.stream().<SagaDSL.SubSaga<GenericRecord>>map(b -> {
                                 //
                                 long sequence = losingAccounts.stream().filter(c -> c.getId().equals(b.getBidder())).findFirst().map(c -> c.getLastEventSequence()).orElse(0L);
                                 return sagaBuilder.addAction(ActionId.random(),

@@ -18,11 +18,11 @@ import io.simplesource.kafka.spec.WindowSpec;
 import io.simplesource.saga.action.ActionApp;
 import io.simplesource.saga.action.eventsourcing.EventSourcingBuilder;
 import io.simplesource.saga.action.eventsourcing.EventSourcingSpec;
+import io.simplesource.saga.model.config.StreamAppConfig;
 import io.simplesource.saga.model.specs.ActionSpec;
 import io.simplesource.saga.model.specs.SagaSpec;
-import io.simplesource.saga.saga.SagaApp;
+import io.simplesource.saga.saga.app.SagaApp;
 import io.simplesource.saga.serialization.avro.AvroSerdes;
-import io.simplesource.saga.shared.streams.StreamAppConfig;
 import io.simplesource.saga.shared.topics.TopicNamer;
 import org.apache.avro.generic.GenericRecord;
 
@@ -91,17 +91,17 @@ public class SagaActionProcessorApp {
         ActionApp<GenericRecord> actionApp = ActionApp.of(AvroSerdes.Generic.actionSerdes(AppShared.SCHEMA_REGISTRY_URL, false))
             .withActionProcessor(EventSourcingBuilder.apply(
                 accountCommands,
-                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(ACTION_TOPIC_PREFIX, ACCOUNT_AGGREGATE_NAME)).withDefaultConfig(6, 1, 7),
-                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(COMMAND_TOPIC_PREFIX, ACCOUNT_AGGREGATE_NAME)).withDefaultConfig(6, 1, 7)))
+                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(ACTION_TOPIC_PREFIX, ACCOUNT_AGGREGATE_NAME)).withDefaultTopicSpec(6, 1, 7),
+                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(COMMAND_TOPIC_PREFIX, ACCOUNT_AGGREGATE_NAME)).withDefaultTopicSpec(6, 1, 7)))
             .withActionProcessor(EventSourcingBuilder.apply(
                 auctionCommands,
-                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(ACTION_TOPIC_PREFIX, AUCTION_AGGREGATE_NAME)).withDefaultConfig(6, 1, 7),
-                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(COMMAND_TOPIC_PREFIX, AUCTION_AGGREGATE_NAME)).withDefaultConfig(6, 1, 7)))
+                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(ACTION_TOPIC_PREFIX, AUCTION_AGGREGATE_NAME)).withDefaultTopicSpec(6, 1, 7),
+                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(COMMAND_TOPIC_PREFIX, AUCTION_AGGREGATE_NAME)).withDefaultTopicSpec(6, 1, 7)))
             .withActionProcessor(EventSourcingBuilder.apply(
                 allocationCommands,
-                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(ACTION_TOPIC_PREFIX, USERNAME_ALLOCATION_AGGREGATE_NAME)).withDefaultConfig(6, 1, 7),
-                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(COMMAND_TOPIC_PREFIX, USERNAME_ALLOCATION_AGGREGATE_NAME)).withDefaultConfig(6, 1, 7)));
+                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(ACTION_TOPIC_PREFIX, USERNAME_ALLOCATION_AGGREGATE_NAME)).withDefaultTopicSpec(6, 1, 7),
+                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(COMMAND_TOPIC_PREFIX, USERNAME_ALLOCATION_AGGREGATE_NAME)).withDefaultTopicSpec(6, 1, 7)));
 
-        actionApp.run(StreamAppConfig.of("sourcing-action-processor-1", BOOTSTRAP_SERVERS));
+        actionApp.run(builder -> builder.withStreamAppConfig(StreamAppConfig.of("sourcing-action-processor-1", BOOTSTRAP_SERVERS)));
     }
 }

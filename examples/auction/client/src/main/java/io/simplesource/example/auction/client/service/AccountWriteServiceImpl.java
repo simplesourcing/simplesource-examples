@@ -30,7 +30,7 @@ import io.simplesource.saga.model.messages.SagaResponse;
 import io.simplesource.saga.model.saga.Saga;
 import io.simplesource.saga.model.saga.SagaError;
 import io.simplesource.saga.model.saga.SagaId;
-import io.simplesource.saga.client.dsl.SagaDsl;
+import io.simplesource.saga.client.dsl.SagaDSL;
 import org.apache.avro.generic.GenericRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,7 +97,7 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                 .map(FutureResult::<AccountError, SagaResponse>fail)
                 .orElseGet(() -> {
                     logger.info("Creating account with username {} and initial fund is {}", account.username(), account.funds());
-                    SagaDsl.SagaBuilder<GenericRecord> sagaBuilder = SagaDsl.SagaBuilder.create();
+                    SagaDSL.SagaBuilder<GenericRecord> sagaBuilder = SagaDSL.SagaBuilder.create();
                     sagaBuilder.addAction(
                             ActionId.random(),
                             AppShared.USERNAME_ALLOCATION_AGGREGATE_NAME,
@@ -141,7 +141,7 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                 .orElseGet(() ->
                         existingAccount.map(account -> {
                             String previousUsername = account.getUserName();
-                            SagaDsl.SagaBuilder<GenericRecord> sagaBuilder = SagaDsl.SagaBuilder.create();
+                            SagaDSL.SagaBuilder<GenericRecord> sagaBuilder = SagaDSL.SagaBuilder.create();
                             sagaBuilder.addAction(
                                     ActionId.random(),
                                     AppShared.USERNAME_ALLOCATION_AGGREGATE_NAME,
