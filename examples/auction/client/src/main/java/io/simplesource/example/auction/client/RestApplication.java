@@ -16,7 +16,8 @@ import io.simplesource.example.auction.domain.AuctionKey;
 import io.simplesource.kafka.dsl.EventSourcedClient;
 import io.simplesource.kafka.spec.TopicSpec;
 import io.simplesource.saga.model.api.SagaAPI;
-import io.simplesource.saga.client.builder.SagaClientBuilder;
+import io.simplesource.saga.client.api.SagaClientBuilder;
+import io.simplesource.saga.model.config.StreamAppConfig;
 import io.simplesource.saga.serialization.avro.AvroSerdes;
 import io.simplesource.saga.shared.topics.TopicNamer;
 import org.apache.avro.Conversions;
@@ -85,15 +86,14 @@ public class RestApplication {
 
     @Bean
     public SagaAPI<GenericRecord> sagaAPI() {
-        SagaClientBuilder<GenericRecord> sagaClientBuilder = new SagaClientBuilder<>(builder ->
-                builder.withKafkaApplicationId("saga-app-1")
-                        .withKafkaBootstrap(BOOTSTRAP_SERVERS));
+        SagaClientBuilder<GenericRecord> sagaClientBuilder = SagaClientBuilder.create(builder ->
+                builder.withStreamAppConfig(StreamAppConfig.of("saga-app-1", BOOTSTRAP_SERVERS)));
         return sagaClientBuilder
                 .withSerdes(AvroSerdes.Generic.sagaSerdes(SCHEMA_REGISTRY_URL, false))
                 .withTopicConfig(builder ->
                         builder
                                 .withTopicNamer(TopicNamer.forPrefix(SAGA_TOPIC_PREFIX, SAGA_BASE_NAME))
-                                .withDefaultConfig(6, 1, 7)
+                                .withDefaultTopicSpec(6, 1, 7)
                 )
                 .withClientId("saga-client-1")
                 .build();
