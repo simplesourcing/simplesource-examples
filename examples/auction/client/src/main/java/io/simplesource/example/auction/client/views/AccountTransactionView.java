@@ -2,38 +2,43 @@ package io.simplesource.example.auction.client.views;
 
 import io.simplesource.example.auction.domain.Reservation;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
 
 import java.math.BigDecimal;
 
 @Document(collection = "auction_account_transactions")
 public final class AccountTransactionView {
     @Id
-    private AccountTransactionId id;
+    private final AccountTransactionId id;
 
     @Field("_id.accountId")
-    private String accountId;
+    private final String accountId;
     @Field("_id.reservationId")
-    private String reservationId;
+    private final String reservationId;
     @Field("timestamp")
-    private Long timestamp;
+    private final long timestamp;
     @Field("description")
-    private String description;
+    private final String description;
     @Field("amount")
-    private BigDecimal amount;
+    private final BigDecimal amount;
     @Field("status")
-    private Reservation.Status status;
+    private final Reservation.Status status;
 
+    public AccountTransactionView(AccountTransactionId id, String accountId, String reservationId, Long timestamp, String description, BigDecimal amount, Reservation.Status status) {
+        this.id = id;
+        this.accountId = accountId;
+        this.reservationId = reservationId;
+        this.timestamp = timestamp;
+        this.description = description;
+        this.amount = amount;
+        this.status = status;
+    }
 
     public String getAccountId() {
         return accountId;
     }
 
-    public AccountTransactionView setAccountId(String accountId) {
-        this.accountId = accountId;
-        return this;
-    }
 
     public String getReservationId() {
         return reservationId;
@@ -43,35 +48,18 @@ public final class AccountTransactionView {
         return timestamp;
     }
 
-    public void setTimestamp(Long timestamp) {
-        this.timestamp = timestamp;
-    }
 
     public String getDescription() {
         return description;
     }
 
-    public AccountTransactionView setDescription(String description) {
-        this.description = description;
-        return this;
-    }
 
     public BigDecimal getAmount() {
         return amount;
     }
 
-    public AccountTransactionView setAmount(BigDecimal amount) {
-        this.amount = amount;
-        return this;
-    }
-
     public Reservation.Status getStatus() {
         return status;
-    }
-
-    public AccountTransactionView setStatus(Reservation.Status status) {
-        this.status = status;
-        return this;
     }
 
     public static class AccountTransactionId {
@@ -83,25 +71,15 @@ public final class AccountTransactionView {
             this.reservationId = reservationId;
         }
 
-        public AccountTransactionId() {
-        }
 
         public String getAccountId() {
             return accountId;
         }
 
-        public AccountTransactionId setAccountId(String accountId) {
-            this.accountId = accountId;
-            return this;
-        }
 
         public String getReservationId() {
             return reservationId;
         }
 
-        public AccountTransactionId setReservationId(String reservationId) {
-            this.reservationId = reservationId;
-            return this;
-        }
     }
 }

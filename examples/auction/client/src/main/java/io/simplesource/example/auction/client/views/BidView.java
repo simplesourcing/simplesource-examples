@@ -3,16 +3,23 @@ package io.simplesource.example.auction.client.views;
 import java.math.BigDecimal;
 
 public class BidView {
-    String bidder;
-    Long timestamp;
-    String reservationId;
-    BigDecimal amount;
+    private final String bidder;
+    private final long timestamp;
+    private final String reservationId;
+    private final BigDecimal amount;
+
+    public BidView(String bidder, long timestamp, String reservationId, BigDecimal amount) {
+        this.bidder = bidder;
+        this.timestamp = timestamp;
+        this.reservationId = reservationId;
+        this.amount = amount;
+    }
 
     public String getBidder() {
         return bidder;
     }
 
-    public Long getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
     }
 

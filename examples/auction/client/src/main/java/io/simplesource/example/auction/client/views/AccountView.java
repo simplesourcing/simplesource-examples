@@ -2,25 +2,42 @@ package io.simplesource.example.auction.client.views;
 
 import io.simplesource.example.auction.domain.Reservation;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 
 @Document(collection = "auction_account")
 public class AccountView {
+
     @Id
-    private String id;
+    private final String id;
+
     @Field("value.username")
-    private String userName;
+    private final String userName;
+
     @Field("value.funds")
-    private BigDecimal funds = BigDecimal.ZERO;
-    private BigDecimal availableFunds;
+    private final BigDecimal funds = BigDecimal.ZERO;
+
+    private final BigDecimal availableFunds;
+
     @Field("sequence")
-    private long lastEventSequence;
+    private final long lastEventSequence;
+
     @Field("value.reservations")
-    private List<ReservationView> draftReservations;
+    private final List<ReservationView> draftReservations;
+
+
+    public AccountView(String id, String userName, BigDecimal availableFunds, long lastEventSequence, List<ReservationView> draftReservations) {
+        this.id = id;
+        this.userName = userName;
+        this.availableFunds = availableFunds;
+        this.lastEventSequence = lastEventSequence;
+        this.draftReservations = Collections.unmodifiableList(draftReservations);
+    }
 
     public BigDecimal getAvailableFunds() {
         if ( draftReservations == null ) {
@@ -34,11 +51,7 @@ public class AccountView {
     public String getId() {
         return id;
     }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
+    
     public String getUserName() {
         return userName;
     }
