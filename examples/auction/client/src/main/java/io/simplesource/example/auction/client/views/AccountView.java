@@ -2,24 +2,24 @@ package io.simplesource.example.auction.client.views;
 
 import io.simplesource.example.auction.domain.Reservation;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-@Document(collection = "auction_account")
+@Document(indexName = "auction_account")
 public class AccountView {
     @Id
     private String id;
-    @Field("value.username")
+    @Field
     private String userName;
-    @Field("value.funds")
+    @Field
     private BigDecimal funds = BigDecimal.ZERO;
     private BigDecimal availableFunds;
-    @Field("sequence")
+    @Field
     private long lastEventSequence;
-    @Field("value.reservations")
+    @Field
     private List<ReservationView> draftReservations;
 
     public BigDecimal getAvailableFunds() {

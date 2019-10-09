@@ -1,39 +1,37 @@
 package io.simplesource.example.auction.client.views;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
 
 import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 
-@Document(collection = "auction_auction")
+@Document(indexName = "auction_auction")
 public class AuctionView {
     @Id
     private String id;
-    @Field("value.creator")
+    @Field
     private String creator;
-    @Field("value.title")
+    @Field
     private String title;
-    @Field("value.description")
+    @Field
     private String description;
-    @Field("value.reservePrice")
+    @Field
     private BigDecimal reservePrice;
-    @Field("value.price")
+    @Field
     private BigDecimal price;
-    @Field("value.status")
+    @Field
     private String status;
-    @Field("value.start")
+    @Field
     private Long start;
-    @Field("value.duration")
+    @Field
     private Long duration;
-    @Field("value.winner")
+    @Field
     private String winner;
-    @Field("sequence")
+    @Field
     private long lastEventSequence;
-    @Field("value.bids")
+    @Field
     private List<BidView> bids;
 
     public String getId() {

@@ -2,27 +2,28 @@ package io.simplesource.example.auction.client.views;
 
 import io.simplesource.example.auction.domain.Reservation;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
-@Document(collection = "auction_account_transactions")
+@Document(indexName = "auction_account_transactions")
 public final class AccountTransactionView {
     @Id
     private AccountTransactionId id;
 
-    @Field("_id.accountId")
+    @Field
     private String accountId;
-    @Field("_id.reservationId")
+    @Field
     private String reservationId;
-    @Field("timestamp")
+    @Field
     private Long timestamp;
-    @Field("description")
+    @Field
     private String description;
-    @Field("amount")
+    @Field
     private BigDecimal amount;
-    @Field("status")
+    @Field
     private Reservation.Status status;
 
 
@@ -74,7 +75,7 @@ public final class AccountTransactionView {
         return this;
     }
 
-    public static class AccountTransactionId {
+    public static class AccountTransactionId implements Serializable {
         private String accountId;
         private String reservationId;
 
