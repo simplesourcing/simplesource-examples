@@ -80,19 +80,15 @@ services:
     extra_hosts:
       - "moby:127.0.0.1"
 
-  mongo:
-    image: mongo
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.4.0
     restart: always
-    hostname: mongo
+    hostname: elasticsearch
+    environment:
+      "discovery.type": single-node
     ports:
-      - "27017:27017"
-
-  mongo-express:
-    image: mongo-express
-    hostname: mongo-express
-    restart: always
-    ports:
-      - "8088:8081"
+      - "9200:9200"
+      - "9300:9300"
 
   connect:
     image: confluentinc/cp-kafka-connect:4.0.0
@@ -123,9 +119,7 @@ services:
       CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=ERROR,org.I0Itec.zkclient=ERROR,org.reflections=ERROR
-      CONNECT_PLUGIN_PATH: /etc/kafka-connect/jars
-    volumes:
-      - ./mongodb_connect_jars:/etc/kafka-connect/jars
+      CONNECT_PLUGIN_PATH: /usr/share/java
 
   connect-configure:
     image: broadinstitute/python-requests

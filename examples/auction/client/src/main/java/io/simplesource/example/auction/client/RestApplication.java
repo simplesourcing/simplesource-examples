@@ -24,14 +24,14 @@ import org.apache.avro.Conversions;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.specific.SpecificData;
-import org.bson.types.Decimal128;
+// import org.bson.types.Decimal128;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
-import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
+//import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.lang.NonNull;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -138,21 +138,21 @@ public class RestApplication {
         return new CorsFilter(source);
     }
 
-    @Bean
-    public MongoCustomConversions mongoCustomConversions() {
-        return new MongoCustomConversions(Arrays.asList(
-                new Decimal128BigDecimalConverter()
-        ));
-    }
-
-    @ReadingConverter
-    private static class Decimal128BigDecimalConverter implements Converter<Decimal128, BigDecimal> {
-
-        @Override
-        public BigDecimal convert(@NonNull Decimal128 source) {
-            return source.bigDecimalValue();
-        }
-    }
+//    @Bean
+//    public MongoCustomConversions mongoCustomConversions() {
+//        return new MongoCustomConversions(Arrays.asList(
+//                new Decimal128BigDecimalConverter()
+//        ));
+//    }
+//
+//    @ReadingConverter
+//    private static class Decimal128BigDecimalConverter implements Converter<Decimal128, BigDecimal> {
+//
+//        @Override
+//        public BigDecimal convert(@NonNull Decimal128 source) {
+//            return source.bigDecimalValue();
+//        }
+//    }
 
     public static void main(String[] args) {
         SpringApplication.run(RestApplication.class, args);

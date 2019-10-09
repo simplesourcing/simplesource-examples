@@ -1,70 +1,47 @@
 package io.simplesource.example.auction.client.views;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.math.BigDecimal;
-import java.util.Collections;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 @Document(collection = "auction_auction")
 public class AuctionView {
     @Id
-    private final String id;
-
+    private String id;
     @Field("value.creator")
-    private final String creator;
-
+    private String creator;
     @Field("value.title")
-    private final String title;
-
+    private String title;
     @Field("value.description")
-    private final String description;
-
+    private String description;
     @Field("value.reservePrice")
-    private final BigDecimal reservePrice;
-
+    private BigDecimal reservePrice;
     @Field("value.price")
-    private final BigDecimal price;
-
+    private BigDecimal price;
     @Field("value.status")
-    private final String status;
-
+    private String status;
     @Field("value.start")
-    private final Long start;
-
+    private Long start;
     @Field("value.duration")
-    private final long duration;
-
+    private Long duration;
     @Field("value.winner")
-    private final String winner;
-
+    private String winner;
     @Field("sequence")
     private long lastEventSequence;
-
     @Field("value.bids")
-    private final List<BidView> bids;
-
-
-    public AuctionView(String id, String creator, String title, String description, BigDecimal reservePrice, BigDecimal price, String status, Long start, long duration, String winner, long lastEventSequence, List<BidView> bids) {
-        this.id = id;
-        this.creator = creator;
-        this.title = title;
-        this.description = description;
-        this.reservePrice = reservePrice;
-        this.price = price;
-        this.status = status;
-        this.start = start;
-        this.duration = duration;
-        this.winner = winner;
-        this.lastEventSequence = lastEventSequence;
-        this.bids = Collections.unmodifiableList(bids);
-    }
+    private List<BidView> bids;
 
     public String getId() {
         return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getCreator() {
@@ -87,6 +64,10 @@ public class AuctionView {
         return price;
     }
 
+    public long getLastEventSequence() {
+        return lastEventSequence;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -95,16 +76,12 @@ public class AuctionView {
         return start;
     }
 
-    public long getDuration() {
+    public Long getDuration() {
         return duration;
     }
 
     public String getWinner() {
         return winner;
-    }
-
-    public long getLastEventSequence() {
-        return lastEventSequence;
     }
 
     public List<BidView> getBids() {
