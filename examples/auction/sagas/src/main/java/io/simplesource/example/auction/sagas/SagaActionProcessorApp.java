@@ -88,19 +88,28 @@ public class SagaActionProcessorApp {
                 Duration.ofMillis(30000L)
         );
 
+        /**
+         * Note set partitions to one instead of original 3 to workaround the below error, to be investigated at a later date
+         *
+         * [ERROR] Failed to execute goal org.codehaus.mojo:exec-maven-plugin:1.6.0:java (default-cli) on project auction-sagas:
+         * An exception occured while executing the Java class.
+         * Invalid topology: stream-thread [saga-coordinator-1-6280258d-3b84-4187-90df-d1f8b1662c70-StreamThread-1-consumer]
+         * Topics not co-partitioned: [saga_action-account-action_response,saga_action-auction-action_response,
+         * saga_action-username_allocation-action_response,saga_coordinator-saga_state] -> [Help 1]
+         */
         ActionApp<GenericRecord> actionApp = ActionApp.of(AvroSerdes.Generic.actionSerdes(AppShared.SCHEMA_REGISTRY_URL, false))
             .withActionProcessor(EventSourcingBuilder.apply(
                 accountCommands,
-                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(ACTION_TOPIC_PREFIX, ACCOUNT_AGGREGATE_NAME)).withDefaultTopicSpec(6, 1, 7),
-                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(COMMAND_TOPIC_PREFIX, ACCOUNT_AGGREGATE_NAME)).withDefaultTopicSpec(6, 1, 7)))
+                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(ACTION_TOPIC_PREFIX, ACCOUNT_AGGREGATE_NAME)).withDefaultTopicSpec(1, 1, 7),
+                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(COMMAND_TOPIC_PREFIX, ACCOUNT_AGGREGATE_NAME)).withDefaultTopicSpec(1, 1, 7)))
             .withActionProcessor(EventSourcingBuilder.apply(
                 auctionCommands,
-                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(ACTION_TOPIC_PREFIX, AUCTION_AGGREGATE_NAME)).withDefaultTopicSpec(6, 1, 7),
-                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(COMMAND_TOPIC_PREFIX, AUCTION_AGGREGATE_NAME)).withDefaultTopicSpec(6, 1, 7)))
+                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(ACTION_TOPIC_PREFIX, AUCTION_AGGREGATE_NAME)).withDefaultTopicSpec(1, 1, 7),
+                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(COMMAND_TOPIC_PREFIX, AUCTION_AGGREGATE_NAME)).withDefaultTopicSpec(1, 1, 7)))
             .withActionProcessor(EventSourcingBuilder.apply(
                 allocationCommands,
-                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(ACTION_TOPIC_PREFIX, USERNAME_ALLOCATION_AGGREGATE_NAME)).withDefaultTopicSpec(6, 1, 7),
-                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(COMMAND_TOPIC_PREFIX, USERNAME_ALLOCATION_AGGREGATE_NAME)).withDefaultTopicSpec(6, 1, 7)));
+                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(ACTION_TOPIC_PREFIX, USERNAME_ALLOCATION_AGGREGATE_NAME)).withDefaultTopicSpec(1, 1, 7),
+                topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(COMMAND_TOPIC_PREFIX, USERNAME_ALLOCATION_AGGREGATE_NAME)).withDefaultTopicSpec(1, 1, 7)));
 
         actionApp.run(builder -> builder.withStreamAppConfig(StreamAppConfig.of("sourcing-action-processor-1", BOOTSTRAP_SERVERS)));
     }
