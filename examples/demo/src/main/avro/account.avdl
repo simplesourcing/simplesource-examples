@@ -1,0 +1,23 @@
+@namespace("io.simplesource.example.demo.repository.write.simplesource.wire")
+protocol AccountSubsystem {
+
+  ///////////////
+  // Key
+  ///////////////
+  record AccountId {
+    string id;
+  }
+
+  ///////////////
+  // Aggregate domain
+  ///////////////
+  record Account {
+    string name;
+    double balance;
+  }
+
+  ///////////////
+  // Commands
+  ///////////////
+
+}

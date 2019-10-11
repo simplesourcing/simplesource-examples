@@ -1,0 +1,77 @@
+version: '3'
+services:
+  zookeeper:
+    image: 'confluentinc/cp-zookeeper:5.0.0'
+    restart: always
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_PORT: 2181
+      ZOO_SERVERS: server.1=zookeeper:2888:3888
+      COMPONENT: zookeeper
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+    image: 'confluentinc/cp-kafka:5.0.0'
+    hostname: broker
+    stop_grace_period: 120s
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "8500:8500"
+    environment:
+      COMPONENT: kafka
+      KAFKA_BROKER_ID: 1001
+      KAFKA_RESERVED_BROKER_MAX_ID: 10000
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_JMX_OPTS: '-Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=broker -Djava.net.preferIPv4Stack=true -Dcom.sun.management.jmxremote.rmi.port=8500'
+
+
+  # This "container" is a workaround to pre-create topics for the Kafka Auction example application
+  # until we have a more elegant way to do that.
+  kafka-create-topics:
+    image: confluentinc/cp-kafka:5.0.0
+    depends_on:
+    - broker
+    - zookeeper
+    hostname: kafka-create-topics
+    # We defined a dependency on "broker", but `depends_on` will NOT wait for the
+    # dependencies to be "ready" before starting the "kafka-create-topics"
+    # container;  it waits only until the dependencies have started.  Hence we
+    # must control startup order more explicitly.
+    # See https://docs.docker.com/compose/startup-order/
+    command: "bash -c 'echo Waiting for Kafka to be ready... && \
+                       cub zk-ready zookeeper:2181 120 && \
+                       cub kafka-ready -b broker:9092 1 120 && \
+                       kafka-topics --create --topic auction_account_transactions_projection --if-not-exists --zookeeper zookeeper:2181 --partitions 10 --replication-factor 1 && \
+                       kafka-topics --create --topic auction_avro_auction-aggregate --if-not-exists --zookeeper zookeeper:2181 --partitions 10 --replication-factor 1 && \
+                       kafka-topics --create --topic auction_avro_account-aggregate --if-not-exists --zookeeper zookeeper:2181 --partitions 10 --replication-factor 1 && \
+                       sleep infinity'"
+    environment:
+      # The following settings are listed here only to satisfy the image's requirements.
+      # We override the image's `command` anyways, hence this container will not start a broker.
+      KAFKA_BROKER_ID: ignored
+      KAFKA_ZOOKEEPER_CONNECT: ignored
+    extra_hosts:
+      - "moby:127.0.0.1"
+
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.4.0
+    restart: always
+    hostname: elasticsearch
+    environment:
+      "discovery.type": single-node
+    ports:
+      - "9200:9200"
+      - "9300:9300"
