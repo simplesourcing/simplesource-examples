@@ -32,6 +32,7 @@ import org.thymeleaf.spring5.view.ThymeleafViewResolver;
 
 
 import javax.annotation.PostConstruct;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -174,7 +175,7 @@ public class App implements WebMvcConfigurer {
 
             @Override
             public Optional<CreateAccountError> createAccount(String name, double openingBalance) {
-                return accountWriteRepository.create(new Account(name, openingBalance));
+                return accountWriteRepository.create(name, openingBalance);
             }
         };
     }

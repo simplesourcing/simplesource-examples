@@ -13,6 +13,7 @@ import io.simplesource.kafka.model.CommandRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -28,8 +29,8 @@ public class SimplesourceAccountRepository implements AccountWriteRepository {
     }
 
     @Override
-    public Optional<CreateAccountError> create(Account account) {
-       FutureResult<CommandError, Sequence> result = commandApi.publishAndQueryCommand(new CommandAPI.Request<>(CommandId.random(), account.name, Sequence.first(), new AccountCommand.CreateAccount(account.name, account.balance)), DEFAULT_TIMEOUT);
+    public Optional<CreateAccountError> create(String accountName, double openingBalance) {
+        FutureResult<CommandError, Sequence> result = commandApi.publishAndQueryCommand(new CommandAPI.Request<>(CommandId.random(), accountName, Sequence.first(), new AccountCommand.CreateAccount(accountName, openingBalance)), DEFAULT_TIMEOUT);
 
        //TODO handle future resolution and error handling properly, below is a quick hacky just do it implementation
         final Result<CommandError, Sequence> resolved = result.unsafePerform(e -> CommandError.of(CommandError.Reason.CommandHandlerFailed, e.getMessage()));

@@ -1,24 +1,50 @@
 package io.simplesource.example.demo.repository.write.simplesource;
 
 import javax.validation.constraints.NotNull;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public class Account {
     @NotNull
     public final String name;
 
-    public final double balance;
+    @NotNull
+    public final List<Transaction> transactions;
 
-    public Account(String name, double balance) {
+    public Account(String name, List<Transaction> transactions) {
         this.name = name;
-        this.balance = balance;
+        this.transactions = transactions;
     }
 
-
-    public Account increment(double amount) {
-        return new Account(name, balance + amount);
+    public Account deposit(double amount) {
+        List<Transaction> updated = new ArrayList<>();
+        Collections.copy(updated, transactions);
+        updated.add(new Transaction(amount, Instant.now()));
+        return new Account(name, updated);
     }
 
-    public Account decrement(double amount) {
-        return new Account(name, balance - amount);
+    public Account withdraw(double amount) {
+        List<Transaction> updated = new ArrayList<>();
+        Collections.copy(updated, transactions);
+        updated.add(new Transaction(-amount, Instant.now()));
+        return new Account(name, updated);
+    }
+
+    public double balance() {
+        return transactions.stream().collect(Collectors.summingDouble(transaction -> transaction.amount));
+    }
+
+    public static final class Transaction {
+        public final double amount;
+        public final Instant date;
+
+        public Transaction(double amount, Instant date) {
+            this.amount = amount;
+            this.date = date;
+        }
     }
 }

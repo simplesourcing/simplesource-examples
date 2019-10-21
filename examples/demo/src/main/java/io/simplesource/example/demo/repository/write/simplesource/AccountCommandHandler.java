@@ -50,7 +50,7 @@ public final class AccountCommandHandler implements CommandHandler<String, Accou
                     if (command.amount <= 0) {
                         return Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Amount must be greater than 0"));
                     } else {
-                        return Result.success(NonEmptyList.of(new AccountEvent.Deposited(command.accountName, account.balance + command.amount)));
+                        return Result.success(NonEmptyList.of(new AccountEvent.Deposited(command.accountName, account.balance() + command.amount)));
                     }
                 })
                 .orElse(Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Account does not exist")));
@@ -61,10 +61,10 @@ public final class AccountCommandHandler implements CommandHandler<String, Accou
                 .<Result<CommandError, NonEmptyList<AccountEvent>>>map(account -> {
                     if (command.amount <= 0) {
                         return Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Amount needs to be greater than 0"));
-                    } else if (account.balance - command.amount < 0) {
+                    } else if (account.balance() - command.amount < 0) {
                         return Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Insufficient funds"));
                     } else {
-                        return Result.success(NonEmptyList.of(new AccountEvent.Deposited(command.accountName, account.balance + command.amount)));
+                        return Result.success(NonEmptyList.of(new AccountEvent.Deposited(command.accountName, account.balance() + command.amount)));
                     }
                 })
                 .orElse(Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Account does not exist")));

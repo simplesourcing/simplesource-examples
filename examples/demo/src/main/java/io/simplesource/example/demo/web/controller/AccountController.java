@@ -67,8 +67,15 @@ public class AccountController {
                 model.put("errors", new String[] { error.message() });
                 return new ModelAndView("account_create", model);
              })
-             .orElseGet(() ->new ModelAndView("redirect:/", Collections.emptyMap())); // Todo redirect to intermediate page as index is eventually consistent
+             .orElseGet(() ->new ModelAndView("redirect:/account/create/success", Collections.emptyMap()));
 
     }
+
+    @GetMapping("/account/create/success")
+    @ResponseBody
+    public ModelAndView viewCreateSuccessPage() {
+        return new ModelAndView("account_create_success", new HashMap<>());
+    }
+
 
 }
