@@ -69,7 +69,7 @@ public class App implements WebMvcConfigurer {
 
     @PostConstruct
     private void starSimpleSourcingService() {
-        new ElasticsearchProjectionService(config()).start();
+        new ElasticsearchProjectionService(config(), ACCOUNT_AGGREGATE_SERDES).start();
 
         new EventSourcedApp()
                 .withKafkaConfig(builder ->
