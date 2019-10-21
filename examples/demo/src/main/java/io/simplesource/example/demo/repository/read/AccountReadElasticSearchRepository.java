@@ -6,6 +6,7 @@ import io.simplesource.example.demo.domain.AccountSummary;
 import io.simplesource.example.demo.repository.read.AccountReadRepository;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -40,8 +41,17 @@ public class AccountReadElasticSearchRepository implements AccountReadRepository
     }
 
     @Override
-    public Optional<Account> findByName(String name) {
-        return Optional.empty();
+    public boolean exists(String name) {
+        GetRequest getRequest = new GetRequest("simplesourcedemo", name).type("account");
+
+        try{
+            GetResponse getResponse = esClient.get(getRequest, RequestOptions.DEFAULT);
+            return getResponse.isExists();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     @Override

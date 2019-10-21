@@ -7,6 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AccountReadRepository {
-    Optional<Account> findByName(String name);
+    boolean exists(String name);
     List<AccountSummary> list();
 }

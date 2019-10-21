@@ -1,7 +1,6 @@
 package io.simplesource.example.demo;
 
 import io.simplesource.api.CommandAPISet;
-import io.simplesource.example.demo.domain.Account;
 import io.simplesource.example.demo.domain.AccountSummary;
 import io.simplesource.example.demo.projections.ElasticsearchProjectionService;
 import io.simplesource.example.demo.repository.read.AccountReadElasticSearchRepository;
@@ -33,7 +32,6 @@ import org.thymeleaf.spring5.view.ThymeleafViewResolver;
 
 
 import javax.annotation.PostConstruct;
-import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -172,7 +170,7 @@ public class App implements WebMvcConfigurer {
         return new AccountService() {
             @Override
             public boolean accountExists(String accountName) {
-                return accountReadRepository.findByName(accountName).isPresent();
+                return accountReadRepository.exists(accountName);
             }
 
             @Override
