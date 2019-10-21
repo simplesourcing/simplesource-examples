@@ -35,6 +35,11 @@
               </tr>
             </thead>
             <tbody>
+                <tr th:each="account: ${accounts}">
+                    <td th:text="${account.accountName}" />
+                    <td th:text="${account.balance}" />
+                    <td><td/>
+                </tr>
             </tbody>
         </table>
     </div>

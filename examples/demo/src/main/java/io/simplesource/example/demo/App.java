@@ -2,6 +2,7 @@ package io.simplesource.example.demo;
 
 import io.simplesource.api.CommandAPISet;
 import io.simplesource.example.demo.domain.Account;
+import io.simplesource.example.demo.domain.AccountSummary;
 import io.simplesource.example.demo.projections.ElasticsearchProjectionService;
 import io.simplesource.example.demo.repository.read.AccountReadElasticSearchRepository;
 import io.simplesource.example.demo.repository.read.AccountReadRepository;
@@ -34,6 +35,7 @@ import org.thymeleaf.spring5.view.ThymeleafViewResolver;
 import javax.annotation.PostConstruct;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -164,7 +166,7 @@ public class App implements WebMvcConfigurer {
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
     public AccountService accountService(CommandAPISet commandAPISet) {
-        AccountReadRepository accountReadRepository = new AccountReadElasticSearchRepository();
+        AccountReadRepository accountReadRepository = new AccountReadElasticSearchRepository(config());
         AccountWriteRepository accountWriteRepository = new SimplesourceAccountRepository(commandAPISet.getCommandAPI("account"));
 
         return new AccountService() {
@@ -176,6 +178,11 @@ public class App implements WebMvcConfigurer {
             @Override
             public Optional<CreateAccountError> createAccount(String name, double openingBalance) {
                 return accountWriteRepository.create(name, openingBalance);
+            }
+
+            @Override
+            public List<AccountSummary> list() {
+                return accountReadRepository.list();
             }
         };
     }

@@ -117,7 +117,7 @@ public class ElasticsearchProjectionService {
 
         private void copyToES(ConsumerRecord<String, String> record) {
             ValueWithSequence<AccountEvent> event = serdes.valueWithSequence().deserializer().deserialize(record.topic(), record.value().getBytes());
-            String key = record.value();
+            String key = serdes.aggregateKey().deserializer().deserialize(record.topic(), record.key().getBytes());
 
             event.value().match(
                     accountCreated -> {
