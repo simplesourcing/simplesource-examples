@@ -17,4 +17,6 @@ public interface AccountService {
 
     void deposit(String account, double amount, long sequence);
 
+    void withdraw(String account, double amount, long sequence);
+
 }

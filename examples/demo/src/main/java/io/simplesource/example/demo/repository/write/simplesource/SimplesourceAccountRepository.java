@@ -74,4 +74,22 @@ public class SimplesourceAccountRepository implements AccountWriteRepository {
                 .run();
 
     }
+
+    @Override
+    public void withdraw(String account, double amount, Sequence position) {
+        FutureResult<CommandError, Sequence> result = commandApi.publishAndQueryCommand(new CommandAPI.Request<>(CommandId.random(), account, position, new AccountCommand.Withdraw(amount)), DEFAULT_TIMEOUT);
+
+        Result<CommandError, Sequence> commandErrorSequenceResult = result.unsafePerform(e -> CommandError.of(CommandError.Reason.InternalError, e.getMessage()));
+
+        commandErrorSequenceResult.failureReasons()
+                .map( errors -> (Runnable) () -> {
+                    log.info("Failed depositing {} in account {} with seq {}", amount, account, position.getSeq());
+                    errors.forEach(error -> {
+                        log.error("  - {}", error.getMessage());
+                    });
+                    throw new RuntimeException("Withdraw failed"); // TODO should return a value
+                })
+                .orElse(() -> {})
+                .run();
+    }
 }

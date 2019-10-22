@@ -3,7 +3,6 @@ package io.simplesource.example.demo.repository.write.simplesource;
 import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 

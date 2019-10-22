@@ -38,7 +38,7 @@
                 <tr th:each="account: ${accounts}">
                     <td th:text="${account.accountName}" />
                     <td th:text="${account.balance}" />
-                    <td>[<a th:href="@{/account/deposit/{accountName}(accountName=${account.accountName})}">Deposit</a>] [<a href="#">Withdraw</a>] [<a href="#">View transactions</a>]<td/>
+                    <td>[<a th:href="@{/account/deposit/{accountName}(accountName=${account.accountName})}">Deposit</a>] [<a th:href="@{/account/withdraw/{accountName}(accountName=${account.accountName})}">Withdraw</a>] [<a href="#">View transactions</a>]<td/>
                 </tr>
             </tbody>
         </table>

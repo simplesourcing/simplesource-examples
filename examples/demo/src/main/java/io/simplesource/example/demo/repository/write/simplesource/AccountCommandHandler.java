@@ -23,13 +23,13 @@ public final class AccountCommandHandler implements CommandHandler<String, Accou
     @Override
     public Result<CommandError, NonEmptyList<AccountEvent>> interpretCommand(String key, Optional<Account> currentAggregate, AccountCommand command) {
         return command.match(
-                createAccount -> createAccountHandler(key, currentAggregate, createAccount),
-                deposit -> depositHandler(key, currentAggregate, deposit),
-                withdraw -> withdrawHandler(key, currentAggregate, withdraw)
+                createAccount -> createAccountHandler(currentAggregate, createAccount),
+                deposit -> depositHandler(currentAggregate, deposit),
+                withdraw -> withdrawHandler(currentAggregate, withdraw)
         );
     }
 
-    public static Result<CommandError, NonEmptyList<AccountEvent>> createAccountHandler(String key, Optional<Account> currentAggregate, AccountCommand.CreateAccount command) {
+    public static Result<CommandError, NonEmptyList<AccountEvent>> createAccountHandler(Optional<Account> currentAggregate, AccountCommand.CreateAccount command) {
         return currentAggregate
                 .<Result<CommandError, NonEmptyList<AccountEvent>>>map(account -> Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, CreateAccountError.ACCOUNT_ALREADY_EXISTS.message())))
                 .orElseGet(() -> {
@@ -45,7 +45,7 @@ public final class AccountCommandHandler implements CommandHandler<String, Accou
                 });
     }
 
-    public static Result<CommandError, NonEmptyList<AccountEvent>> depositHandler(String key, Optional<Account> currentAggregate, AccountCommand.Deposit command) {
+    public static Result<CommandError, NonEmptyList<AccountEvent>> depositHandler(Optional<Account> currentAggregate, AccountCommand.Deposit command) {
         return currentAggregate
                 .<Result<CommandError, NonEmptyList<AccountEvent>>>map(account -> {
                     if (command.amount <= 0) {
@@ -57,7 +57,7 @@ public final class AccountCommandHandler implements CommandHandler<String, Accou
                 .orElse(Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Account does not exist")));
     }
 
-    public static Result<CommandError, NonEmptyList<AccountEvent>> withdrawHandler(String key, Optional<Account> currentAggregate, AccountCommand.Withdraw command) {
+    public static Result<CommandError, NonEmptyList<AccountEvent>> withdrawHandler(Optional<Account> currentAggregate, AccountCommand.Withdraw command) {
         return currentAggregate
                 .<Result<CommandError, NonEmptyList<AccountEvent>>>map(account -> {
                     if (command.amount <= 0) {
@@ -65,7 +65,7 @@ public final class AccountCommandHandler implements CommandHandler<String, Accou
                     } else if (account.balance() - command.amount < 0) {
                         return Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Insufficient funds"));
                     } else {
-                        return Result.success(NonEmptyList.of(new AccountEvent.Deposited(command.amount, Instant.now())));
+                        return Result.success(NonEmptyList.of(new AccountEvent.Withdrawn(command.amount, Instant.now())));
                     }
                 })
                 .orElse(Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Account does not exist")));

@@ -193,6 +193,11 @@ public class App implements WebMvcConfigurer {
             public void deposit(String account, double amount, long sequence) {
                 accountWriteRepository.deposit(account, amount, Sequence.position(sequence));
             }
+
+            @Override
+            public void withdraw(String account, double amount, long sequence) {
+                accountWriteRepository.withdraw(account, amount, Sequence.position(sequence));
+            }
         };
     }
 }
