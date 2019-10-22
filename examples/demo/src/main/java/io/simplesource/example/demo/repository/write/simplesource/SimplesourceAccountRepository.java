@@ -10,6 +10,8 @@ import io.simplesource.example.demo.domain.Account;
 import io.simplesource.example.demo.repository.write.AccountWriteRepository;
 import io.simplesource.example.demo.repository.write.CreateAccountError;
 import io.simplesource.kafka.model.CommandRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
@@ -21,6 +23,7 @@ import java.util.Optional;
  */
 public class SimplesourceAccountRepository implements AccountWriteRepository {
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(60);
+    private static final Logger log = LoggerFactory.getLogger(SimplesourceAccountRepository.class);
 
     private CommandAPI<String, AccountCommand> commandApi;
 
@@ -51,5 +54,24 @@ public class SimplesourceAccountRepository implements AccountWriteRepository {
         }
 
         return Optional.empty();
+    }
+
+    @Override
+    public void deposit(String account, double amount, Sequence version) {
+        FutureResult<CommandError, Sequence> result = commandApi.publishAndQueryCommand(new CommandAPI.Request<>(CommandId.random(), account, version, new AccountCommand.Deposit(amount)), DEFAULT_TIMEOUT);
+
+        Result<CommandError, Sequence> commandErrorSequenceResult = result.unsafePerform(e -> CommandError.of(CommandError.Reason.InternalError, e.getMessage()));
+
+        commandErrorSequenceResult.failureReasons()
+                .map( errors -> (Runnable) () -> {
+                    log.info("Failed depositing {} in account {} with seq {}", amount, account, version);
+                    errors.forEach(error -> {
+                        log.error("  - {}", error.getMessage());
+                    });
+                    throw new RuntimeException("Deposit failed"); // TODO should return a value
+                })
+                .orElse(() -> {})
+                .run();
+
     }
 }

@@ -3,9 +3,11 @@ package io.simplesource.example.demo.web.form;
 public class DepositForm {
 
     private double amount;
+    private long sequence;
 
-    public DepositForm(double amount) {
+    public DepositForm(double amount, long sequence) {
         this.amount = amount;
+        this.sequence = sequence;
     }
 
     public double getAmount() {
@@ -14,5 +16,13 @@ public class DepositForm {
 
     public void setAmount(double amount) {
         this.amount = amount;
+    }
+
+    public long getSequence() {
+        return sequence;
+    }
+
+    public void setSequence(long sequence) {
+        this.sequence = sequence;
     }
 }

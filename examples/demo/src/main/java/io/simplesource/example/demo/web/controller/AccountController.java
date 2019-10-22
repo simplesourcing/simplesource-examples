@@ -1,5 +1,6 @@
 package io.simplesource.example.demo.web.controller;
 
+import io.simplesource.example.demo.domain.AccountSummary;
 import io.simplesource.example.demo.service.AccountService;
 import io.simplesource.example.demo.web.form.CreateAccountForm;
 import io.simplesource.example.demo.web.form.DepositForm;
@@ -10,6 +11,7 @@ import org.springframework.web.servlet.ModelAndView;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Controller
 public class AccountController {
@@ -20,6 +22,9 @@ public class AccountController {
         this.accountService = accountService;
     }
 
+    //
+    // CREATE mappings
+    //
     @GetMapping("/account/create")
     public ModelAndView viewCreateAccountPage() {
         Map model = new HashMap();
@@ -64,13 +69,25 @@ public class AccountController {
 
 
 
+    //
+    // DEPOSIT MAPPINGS
     @GetMapping("/account/deposit/{account}")
     public ModelAndView viewDepositAccountPage(@PathVariable String account) {
         Map model = new HashMap();
-        model.put("form", new DepositForm(0));
-        model.put("account", account);
-        model.put("errors", new String[] {});
-        return new ModelAndView("account_deposit", model);
+
+        // Note accountSummary is eventually consistent so depending on end-to-end delay of projection
+        // generation this may cause optimistic concurrency exceptions from simple sourcing.
+        //
+        // For deposit the read before write isn't perfect, using sequence/version here only solves duplicate
+        // form submissions from happening
+        return accountService.getAccountSummary(account)
+                .map(accountSummary -> {
+                    model.put("form", new DepositForm(0, accountSummary.version));
+                    model.put("account", accountSummary.accountName);
+                    model.put("errors", new String[] {});
+                    return new ModelAndView("account_deposit", model);
+                })
+                .orElse(new ModelAndView("redirect:/", model));
     }
 
     @GetMapping("/account/deposit/success")
@@ -84,12 +101,14 @@ public class AccountController {
         Map model = new HashMap();
 
         if (!accountService.accountExists(account)) {
-            System.out.println("***" + account + "***");
             model.put("form", form);
             model.put("account", account);
             model.put("errors", new String[] { "Account does not exist"});
             return new ModelAndView("account_deposit", model);
         }
+
+        accountService.deposit(account, form.getAmount(), form.getSequence());
+
         return new ModelAndView("redirect:/account/deposit/success", Collections.emptyMap());
     }
 

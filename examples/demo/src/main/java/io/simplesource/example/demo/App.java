@@ -1,6 +1,7 @@
 package io.simplesource.example.demo;
 
 import io.simplesource.api.CommandAPISet;
+import io.simplesource.data.Sequence;
 import io.simplesource.example.demo.domain.AccountSummary;
 import io.simplesource.example.demo.projections.ElasticsearchProjectionService;
 import io.simplesource.example.demo.repository.read.AccountReadElasticSearchRepository;
@@ -170,7 +171,12 @@ public class App implements WebMvcConfigurer {
         return new AccountService() {
             @Override
             public boolean accountExists(String accountName) {
-                return accountReadRepository.exists(accountName);
+                return accountReadRepository.accountSummary(accountName).isPresent();
+            }
+
+            @Override
+            public Optional<AccountSummary> getAccountSummary(String accountName) {
+                return accountReadRepository.accountSummary(accountName);
             }
 
             @Override
@@ -181,6 +187,11 @@ public class App implements WebMvcConfigurer {
             @Override
             public List<AccountSummary> list() {
                 return accountReadRepository.list();
+            }
+
+            @Override
+            public void deposit(String account, double amount, long sequence) {
+                accountWriteRepository.deposit(account, amount, Sequence.position(sequence));
             }
         };
     }

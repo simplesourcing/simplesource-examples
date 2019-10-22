@@ -5,7 +5,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class Account {
@@ -21,15 +20,13 @@ public class Account {
     }
 
     public Account deposit(double amount) {
-        List<Transaction> updated = new ArrayList<>();
-        Collections.copy(updated, transactions);
+        List<Transaction> updated = new ArrayList<>(transactions);
         updated.add(new Transaction(amount, Instant.now()));
         return new Account(name, updated);
     }
 
     public Account withdraw(double amount) {
-        List<Transaction> updated = new ArrayList<>();
-        Collections.copy(updated, transactions);
+        List<Transaction> updated = new ArrayList<>(transactions);
         updated.add(new Transaction(-amount, Instant.now()));
         return new Account(name, updated);
     }

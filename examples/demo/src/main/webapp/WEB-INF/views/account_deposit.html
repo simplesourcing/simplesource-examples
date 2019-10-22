@@ -34,6 +34,7 @@
         </div>
 
         <form method="post" th:action="@{/account/deposit/{accountName}(accountName=${account})}" th:object="${form}">
+            <input type="hidden" name="sequence" th:field="*{sequence}"/>
             <div class="form-group">
                 <label for="amount">Amount</label>
                 <input type="number" step=".01" class="form-control" id="amount" placeholder="Enter opening balance" th:field="*{amount}">

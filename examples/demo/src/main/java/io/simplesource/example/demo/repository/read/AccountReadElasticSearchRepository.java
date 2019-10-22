@@ -41,12 +41,19 @@ public class AccountReadElasticSearchRepository implements AccountReadRepository
     }
 
     @Override
-    public boolean exists(String name) {
+    public Optional<AccountSummary> accountSummary(String name) {
         GetRequest getRequest = new GetRequest("simplesourcedemo", name).type("account");
 
         try{
             GetResponse getResponse = esClient.get(getRequest, RequestOptions.DEFAULT);
-            return getResponse.isExists();
+            if(getResponse.isExists()) {
+                String account = (String) getResponse.getSourceAsMap().get("accountName");
+                double balance = (double) getResponse.getSourceAsMap().get("balance");
+                long version = Long.valueOf(getResponse.getSourceAsMap().get("sequence").toString());
+                return Optional.of(new AccountSummary(account, balance, version));
+            } else {
+                return Optional.empty();
+            }
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -72,7 +79,8 @@ public class AccountReadElasticSearchRepository implements AccountReadRepository
                searchHit = searchHits.next();
                String account = (String) searchHit.getSourceAsMap().get("accountName");
                double balance = (double) searchHit.getSourceAsMap().get("balance");
-               result.add(new AccountSummary(account, balance));
+               long version = Long.valueOf(searchHit.getSourceAsMap().get("sequence").toString());
+               result.add(new AccountSummary(account, balance, version));
            }
 
            return result;

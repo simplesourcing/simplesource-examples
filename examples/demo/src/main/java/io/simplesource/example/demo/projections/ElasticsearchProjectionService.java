@@ -19,10 +19,10 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.settings.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,8 +77,6 @@ public class ElasticsearchProjectionService {
                 shutdown.set(true);
             }));
 
-            Settings settings = Settings.builder()
-                    .put("cluster.name", "√").build();
 
             esClient = new RestHighLevelClient(
                     RestClient.builder(
@@ -99,6 +97,7 @@ public class ElasticsearchProjectionService {
             while (!shutdown.get()) {
                 ConsumerRecords<String, String> records = consumer.poll(POLL_DURATION);
                 try {
+                    log.info("Polling");
                     records.forEach(record -> copyToES(record));
                     consumer.commitSync();
                 } catch (Exception e) {
@@ -142,24 +141,33 @@ public class ElasticsearchProjectionService {
                         return null;
                     },
                     deposited -> {
+                        log.info("*****************{}**************", deposited.amount);
                         try {
                             // 1) Get current doc
-                            GetRequest getRequest = new GetRequest(INDEX, key).type("account").version(event.sequence().getSeq() - 1);
+                            GetRequest getRequest = new GetRequest(INDEX, key).type("account");
                             GetResponse getResponse = esClient.get(getRequest, RequestOptions.DEFAULT);
 
-                            // 2) Validate current doc version == sequenceNo - 1
-                            if(getResponse.isExists() && getResponse.getField("sequence").<Long>getValue() == event.sequence().getSeq() -1) {
-                                // 3) Update doc with new balance + sequenceNo/version
-                                long currentBalance = getResponse.getField("balance").<Long>getValue();
-                                Map<String, Object> data = new HashMap<>();
-                                data.put("balance",currentBalance + deposited.amount);
-                                data.put("sequence", event.sequence().getSeq());
+                            if(getResponse.isExists()) {
+                                Map<String, Object> source = getResponse.getSource();
+                                long sequence = Long.valueOf(source.get("sequence").toString()); // ES casts as a int so parse back as a long, hack should create an index schema
 
-                                UpdateRequest request = new UpdateRequest(INDEX, key)
-                                        .type("account")
-                                        .doc(data);
+                                if(event.sequence().getSeq() == sequence+1) {
+                                    Map<String, Object> data = new HashMap<>();
+                                    data.put("balance",(double) source.get("balance") + deposited.amount);
+                                    data.put("sequence", event.sequence().getSeq());
 
-                                esClient.update(request, RequestOptions.DEFAULT);
+                                    UpdateRequest request = new UpdateRequest(INDEX, key)
+                                            .type("account")
+                                            .doc(data);
+
+                                    UpdateResponse resp = esClient.update(request, RequestOptions.DEFAULT);
+                                    log.info("Updated AccountSummary projection with id {}, new sequence: {}. {}", key, event.sequence().getSeq(), resp);
+                                } else {
+                                    log.error("Skipping deposited event projection with [{},{}]. Sequence miss-match", key, event.sequence().getSeq());
+                                }
+
+                            } else {
+                                log.error("Skipping deposited event projection with [{},{}]. Existing entity not found", key, event.sequence().getSeq());
                             }
 
                         } catch (Exception e) {

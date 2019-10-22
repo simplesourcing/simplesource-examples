@@ -1,5 +1,6 @@
 package io.simplesource.example.demo.repository.write.simplesource;
 
+import java.time.Instant;
 import java.util.function.Function;
 
 public abstract class AccountEvent {
@@ -24,12 +25,12 @@ public abstract class AccountEvent {
     }
 
     public static final class Deposited extends AccountEvent {
-        public final String account;
         public final double amount;
+        public final Instant time;
 
-        public Deposited(String account, double amount) {
-            this.account = account;
+        public Deposited(double amount, Instant time) {
             this.amount = amount;
+            this.time = time;
         }
 
         @Override
@@ -39,12 +40,12 @@ public abstract class AccountEvent {
     }
 
     public static final class Withdrawn extends AccountEvent {
-        public final String account;
         public final double amount;
+        public final Instant time;
 
-        public Withdrawn(String account, double amount) {
-            this.account = account;
+        public Withdrawn(double amount, Instant time) {
             this.amount = amount;
+            this.time = time;
         }
 
         @Override

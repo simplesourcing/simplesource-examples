@@ -26,11 +26,9 @@ public abstract class AccountCommand {
     }
 
     public final static class Deposit extends AccountCommand {
-        public final String accountName;
         public final double amount;
 
-        public Deposit(String accountName, double amount) {
-            this.accountName = accountName;
+        public Deposit(double amount) {
             this.amount = amount;
         }
 
@@ -41,11 +39,9 @@ public abstract class AccountCommand {
     }
 
     public final static class Withdraw extends AccountCommand {
-        public final String accountName;
         public final double amount;
 
-        public Withdraw(String accountName, double amount) {
-            this.accountName = accountName;
+        public Withdraw(double amount) {
             this.amount = amount;
         }
 

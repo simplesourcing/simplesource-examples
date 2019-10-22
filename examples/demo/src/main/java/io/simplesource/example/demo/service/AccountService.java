@@ -9,8 +9,12 @@ import java.util.Optional;
 public interface AccountService {
     boolean accountExists(String accountName);
 
+    Optional<AccountSummary> getAccountSummary(String accountName);
+
     Optional<CreateAccountError> createAccount(String name, double openingBalance);
 
     List<AccountSummary> list();
+
+    void deposit(String account, double amount, long sequence);
 
 }

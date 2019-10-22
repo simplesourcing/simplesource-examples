@@ -6,6 +6,7 @@ import io.simplesource.data.NonEmptyList;
 import io.simplesource.data.Result;
 import io.simplesource.example.demo.repository.write.CreateAccountError;
 
+import java.time.Instant;
 import java.util.Optional;
 
 public final class AccountCommandHandler implements CommandHandler<String, AccountCommand, AccountEvent, Optional<Account>> {
@@ -50,7 +51,7 @@ public final class AccountCommandHandler implements CommandHandler<String, Accou
                     if (command.amount <= 0) {
                         return Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Amount must be greater than 0"));
                     } else {
-                        return Result.success(NonEmptyList.of(new AccountEvent.Deposited(command.accountName, account.balance() + command.amount)));
+                        return Result.success(NonEmptyList.of(new AccountEvent.Deposited(command.amount, Instant.now())));
                     }
                 })
                 .orElse(Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Account does not exist")));
@@ -64,7 +65,7 @@ public final class AccountCommandHandler implements CommandHandler<String, Accou
                     } else if (account.balance() - command.amount < 0) {
                         return Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Insufficient funds"));
                     } else {
-                        return Result.success(NonEmptyList.of(new AccountEvent.Deposited(command.accountName, account.balance() + command.amount)));
+                        return Result.success(NonEmptyList.of(new AccountEvent.Deposited(command.amount, Instant.now())));
                     }
                 })
                 .orElse(Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Account does not exist")));
