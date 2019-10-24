@@ -1,6 +1,5 @@
 package io.simplesource.example.demo.web.controller;
 
-import io.simplesource.example.demo.domain.AccountSummary;
 import io.simplesource.example.demo.service.AccountService;
 import io.simplesource.example.demo.web.form.CreateAccountForm;
 import io.simplesource.example.demo.web.form.DepositForm;
@@ -12,7 +11,6 @@ import org.springframework.web.servlet.ModelAndView;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Controller
 public class AccountController {
@@ -38,28 +36,14 @@ public class AccountController {
     @PostMapping("/account/create")
     @ResponseBody
     public ModelAndView handleCreateFormSubmit(@ModelAttribute CreateAccountForm form) {
-        Map model = new HashMap();
-
-        if (form.getAccountName() == null || form.getAccountName().trim().isEmpty()) {
-            model.put("form", form);
-            model.put("errors", new String[] { "Account name cannot be empty"});
-            return new ModelAndView("account_create", model);
-        }
-
-        if (accountService.accountExists(form.getAccountName())) {
-            model.put("form", form);
-            model.put("errors", new String[] { "Account with that name already exists"});
-            return new ModelAndView("account_create", model);
-        }
-
         return accountService.createAccount(form.getAccountName(), form.getAccountBalance())
             .map(error -> {
+                Map model = new HashMap();
                 model.put("form", form);
                 model.put("errors", new String[] { error.message() });
                 return new ModelAndView("account_create", model);
              })
-             .orElseGet(() ->new ModelAndView("redirect:/account/create/success", Collections.emptyMap()));
-
+             .orElseGet(() -> new ModelAndView("redirect:/account/create/success", Collections.emptyMap()));
     }
 
     @GetMapping("/account/create/success")
@@ -89,7 +73,7 @@ public class AccountController {
                     model.put("errors", new String[] {});
                     return new ModelAndView("account_deposit", model);
                 })
-                .orElse(new ModelAndView("redirect:/", model));
+                .orElse(new ModelAndView("redirect:/", model)); // TODO should redirect to genric error page with link to home
     }
 
     @GetMapping("/account/deposit/success")
@@ -102,6 +86,7 @@ public class AccountController {
     public ModelAndView handleDepositSubmit(@ModelAttribute DepositForm form, @PathVariable("account") String account) {
         Map model = new HashMap();
 
+        // TODO we shouldn't have this logic here, accountService.withdraw should tell us account doesn't exist
         if (!accountService.accountExists(account)) {
             model.put("form", form);
             model.put("account", account);
@@ -146,6 +131,7 @@ public class AccountController {
     public ModelAndView handleWithdawSubmit(@ModelAttribute WithdrawForm form, @PathVariable("account") String account) {
         Map model = new HashMap();
 
+        // TODO we shouldn't have this logic here, accountService.withdraw should tell us account doesn't exist
         if (!accountService.accountExists(account)) {
             model.put("form", form);
             model.put("account", account);

@@ -35,13 +35,11 @@ public final class AccountCommandHandler implements CommandHandler<String, Accou
                 .orElseGet(() -> {
                     if (command.name == null || command.name.trim().isEmpty()) {
                         return Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, CreateAccountError.ACCOUNT_NAME_NOT_SET.message()));
-                    }
-
-                    if (command.openingBalance < 0) {
+                    } else if (command.openingBalance < 0) {
                         return Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, CreateAccountError.OPENING_BALANCE_LESS_THAN_ZERO.message()));
+                    } else {
+                        return Result.success(NonEmptyList.of(new AccountEvent.AccountCreated(command.name, command.openingBalance, Instant.now())));
                     }
-
-                    return Result.success(NonEmptyList.of(new AccountEvent.AccountCreated(command.name, command.openingBalance)));
                 });
     }
 
@@ -61,7 +59,7 @@ public final class AccountCommandHandler implements CommandHandler<String, Accou
         return currentAggregate
                 .<Result<CommandError, NonEmptyList<AccountEvent>>>map(account -> {
                     if (command.amount <= 0) {
-                        return Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Amount needs to be greater than 0"));
+                        return Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Amount must be greater than 0"));
                     } else if (account.balance() - command.amount < 0) {
                         return Result.failure(CommandError.of(CommandError.Reason.CommandHandlerFailed, "Insufficient funds"));
                     } else {

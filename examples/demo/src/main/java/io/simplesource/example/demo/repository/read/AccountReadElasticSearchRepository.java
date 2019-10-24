@@ -32,6 +32,8 @@ import java.util.Optional;
 public class AccountReadElasticSearchRepository implements AccountReadRepository {
     private static final Logger log = LoggerFactory.getLogger(AccountReadElasticSearchRepository.class);
 
+    private static final String SUMMARY_INDEX = "simplesourcedemo_account_summary";
+
     private final RestHighLevelClient esClient;
 
     public AccountReadElasticSearchRepository(Config config) {
@@ -42,7 +44,7 @@ public class AccountReadElasticSearchRepository implements AccountReadRepository
 
     @Override
     public Optional<AccountSummary> accountSummary(String name) {
-        GetRequest getRequest = new GetRequest("simplesourcedemo", name).type("account");
+        GetRequest getRequest = new GetRequest(SUMMARY_INDEX, name);
 
         try{
             GetResponse getResponse = esClient.get(getRequest, RequestOptions.DEFAULT);
@@ -64,8 +66,7 @@ public class AccountReadElasticSearchRepository implements AccountReadRepository
     @Override
     public List<AccountSummary> list() {
         SearchRequest searchRequest = new SearchRequest();
-        searchRequest.indices("simplesourcedemo");
-        searchRequest.types("account");
+        searchRequest.indices(SUMMARY_INDEX);
 
 
        try {

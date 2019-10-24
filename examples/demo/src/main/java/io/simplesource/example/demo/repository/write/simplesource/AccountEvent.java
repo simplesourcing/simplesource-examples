@@ -12,10 +12,12 @@ public abstract class AccountEvent {
     public static final class AccountCreated extends AccountEvent {
         public final String accountName;
         public final double openingBalance;
+        public final Instant time;
 
-        public AccountCreated(String accountName, double openingBalance) {
+        public AccountCreated(String accountName, double openingBalance, Instant time) {
             this.accountName = accountName;
             this.openingBalance = openingBalance;
+            this.time = time;
         }
 
         @Override
