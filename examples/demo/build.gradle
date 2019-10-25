@@ -1,3 +1,5 @@
+import com.bmuschko.gradle.docker.tasks.image.Dockerfile
+
 buildscript {
   repositories {
     mavenCentral()
@@ -9,6 +11,9 @@ buildscript {
   }
 }
 
+plugins {
+  id 'com.bmuschko.docker-remote-api' version '3.2.3'
+}
 
 apply plugin: 'application'
 apply plugin: 'java'
@@ -50,4 +55,23 @@ dependencies {
   compile('org.elasticsearch.client:elasticsearch-rest-high-level-client:7.4.0')
   compile('org.elasticsearch.client:elasticsearch-rest-client:7.4.0')
   compile('org.elasticsearch:elasticsearch:7.4.0')
+}
+
+//jar {
+//  manifest {
+//    attributes "Main-Class": "io.simplesource.example.demo.App"
+//  }
+//
+//  from {
+//    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+//  }
+//}
+
+task createDockerfile(type: Dockerfile) {
+  destFile = project.file('build/docker/Dockerfile')
+  from 'openjdk:11-jre-slim'
+  copyFile jar.archivePath.path, '/opt/microservice.jar'
+  entryPoint 'java'
+  defaultCommand '-jar', '/opt/microservice.jar'
+  exposePort 8083
 }

@@ -1,14 +1,10 @@
 package io.simplesource.example.demo;
 
 import io.simplesource.api.CommandAPISet;
-import io.simplesource.data.Sequence;
-import io.simplesource.example.demo.domain.AccountSummary;
-import io.simplesource.example.demo.domain.AccountTransaction;
 import io.simplesource.example.demo.projections.ElasticsearchProjectionService;
 import io.simplesource.example.demo.repository.read.AccountReadElasticSearchRepository;
 import io.simplesource.example.demo.repository.read.AccountReadRepository;
 import io.simplesource.example.demo.repository.write.AccountWriteRepository;
-import io.simplesource.example.demo.repository.write.CreateAccountError;
 import io.simplesource.example.demo.repository.write.simplesource.*;
 import io.simplesource.example.demo.repository.write.simplesource.wire.AccountId;
 import io.simplesource.example.demo.service.AccountService;
