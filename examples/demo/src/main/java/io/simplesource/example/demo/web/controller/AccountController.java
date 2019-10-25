@@ -1,16 +1,20 @@
 package io.simplesource.example.demo.web.controller;
 
+import io.simplesource.example.demo.domain.AccountTransaction;
 import io.simplesource.example.demo.service.AccountService;
 import io.simplesource.example.demo.web.form.CreateAccountForm;
 import io.simplesource.example.demo.web.form.DepositForm;
 import io.simplesource.example.demo.web.form.WithdrawForm;
+import io.simplesource.example.demo.web.viewobject.AccountTransactionRow;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 public class AccountController {
@@ -142,6 +146,27 @@ public class AccountController {
         accountService.withdraw(account, form.getAmount(), form.getSequence());
 
         return new ModelAndView("redirect:/account/withdraw/success", Collections.emptyMap());
+    }
+
+    //
+    // Transaction MAPPINGS
+    //
+    @GetMapping("/account/{account}/transactions")
+    @ResponseBody
+    public ModelAndView viewTransactions(@PathVariable("account") String account) {
+        Map model = new HashMap();
+
+        List<AccountTransactionRow> transactions = accountService
+                .getTransactions(account)
+                .stream()
+                .map(tx -> new AccountTransactionRow(tx.ts, tx.amount))
+                .collect(Collectors.toList());
+
+        System.out.println("TRANSACTIONS SIZE: " + transactions.size());
+
+        model.put("account", account);
+        model.put("transactions", transactions);
+        return new ModelAndView("account_transactions", model);
     }
 
 }

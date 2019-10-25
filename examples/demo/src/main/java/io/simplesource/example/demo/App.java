@@ -3,6 +3,7 @@ package io.simplesource.example.demo;
 import io.simplesource.api.CommandAPISet;
 import io.simplesource.data.Sequence;
 import io.simplesource.example.demo.domain.AccountSummary;
+import io.simplesource.example.demo.domain.AccountTransaction;
 import io.simplesource.example.demo.projections.ElasticsearchProjectionService;
 import io.simplesource.example.demo.repository.read.AccountReadElasticSearchRepository;
 import io.simplesource.example.demo.repository.read.AccountReadRepository;
@@ -11,6 +12,7 @@ import io.simplesource.example.demo.repository.write.CreateAccountError;
 import io.simplesource.example.demo.repository.write.simplesource.*;
 import io.simplesource.example.demo.repository.write.simplesource.wire.AccountId;
 import io.simplesource.example.demo.service.AccountService;
+import io.simplesource.example.demo.service.DefaultAccountService;
 import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.api.CommandSerdes;
 import io.simplesource.kafka.dsl.EventSourcedApp;
@@ -159,45 +161,22 @@ public class App implements WebMvcConfigurer {
         return result;
     }
 
-
-
-    // TODO create a real implementation elsewhere backed by simplestreams for writes and es for reads
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
-    public AccountService accountService(CommandAPISet commandAPISet) {
-        AccountReadRepository accountReadRepository = new AccountReadElasticSearchRepository(config());
-        AccountWriteRepository accountWriteRepository = new SimplesourceAccountRepository(commandAPISet.getCommandAPI("account"));
+    public AccountReadRepository accountReadRepository() {
+        return new AccountReadElasticSearchRepository(config());
+    }
 
-        return new AccountService() {
-            @Override
-            public boolean accountExists(String accountName) {
-                return accountReadRepository.accountSummary(accountName).isPresent();
-            }
+    @Bean
+    @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public AccountWriteRepository accountWriteRepository(CommandAPISet commandAPISet) {
+        return new SimplesourceAccountRepository(commandAPISet.getCommandAPI("account"));
+    }
 
-            @Override
-            public Optional<AccountSummary> getAccountSummary(String accountName) {
-                return accountReadRepository.accountSummary(accountName);
-            }
 
-            @Override
-            public Optional<CreateAccountError> createAccount(String name, double openingBalance) {
-                return accountWriteRepository.create(name, openingBalance);
-            }
-
-            @Override
-            public List<AccountSummary> list() {
-                return accountReadRepository.list();
-            }
-
-            @Override
-            public void deposit(String account, double amount, long sequence) {
-                accountWriteRepository.deposit(account, amount, Sequence.position(sequence));
-            }
-
-            @Override
-            public void withdraw(String account, double amount, long sequence) {
-                accountWriteRepository.withdraw(account, amount, Sequence.position(sequence));
-            }
-        };
+    @Bean
+    @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
+    public AccountService accountService(AccountReadRepository accountReadRepository, AccountWriteRepository accountWriteRepository) {
+        return new DefaultAccountService(accountReadRepository, accountWriteRepository);
     }
 }
