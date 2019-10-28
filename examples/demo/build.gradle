@@ -57,20 +57,11 @@ dependencies {
   compile('org.elasticsearch:elasticsearch:7.4.0')
 }
 
-//jar {
-//  manifest {
-//    attributes "Main-Class": "io.simplesource.example.demo.App"
-//  }
-//
-//  from {
-//    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-//  }
-//}
 
 task createDockerfile(type: Dockerfile) {
   destFile = project.file('build/docker/Dockerfile')
   from 'openjdk:11-jre-slim'
-  copyFile jar.archivePath.path, '/opt/microservice.jar'
+  copyFile "build/libs/demo.jar", '/opt/microservice.jar'
   entryPoint 'java'
   defaultCommand '-jar', '/opt/microservice.jar'
   exposePort 8083
