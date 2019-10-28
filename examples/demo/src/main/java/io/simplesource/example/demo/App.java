@@ -32,7 +32,6 @@ import org.thymeleaf.spring5.view.ThymeleafViewResolver;
 
 import javax.annotation.PostConstruct;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -62,19 +61,20 @@ public class App implements WebMvcConfigurer {
     public static void main(String[] args) {
         // Start Spring boot
         SpringApplication springBoot = new SpringApplication(App.class);
-        springBoot.setDefaultProperties(Collections.singletonMap("server.port","8083"));
+        int port = Optional.ofNullable(Integer.parseInt(System.getenv("SERVER_PORT"))).orElse(8083);
+        springBoot.setDefaultProperties(Collections.singletonMap("server.port", port));
         springBoot.run(args);
     }
 
     @PostConstruct
-    private void starSimpleSourcingService() {
+    private void starSimpleSourcingService(Config config) {
         new ElasticsearchProjectionService(config(), ACCOUNT_AGGREGATE_SERDES).start();
 
         new EventSourcedApp()
                 .withKafkaConfig(builder ->
                         builder
                                 .withKafkaApplicationId("simplesourcing-demo")
-                                .withKafkaBootstrap("kafka:9092")
+                                .withKafkaBootstrap(config.kafkaBootstrapServers)
                                 .build()
                 )
                 .<String, AccountCommand, AccountEvent, Optional<io.simplesource.example.demo.repository.write.simplesource.Account>>addAggregate(aggregateBuilder ->
@@ -123,7 +123,10 @@ public class App implements WebMvcConfigurer {
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
     public Config config() {
-        return new Config("demo", "kafka:9092", "elasticsearch", 9200);
+        String kafkabootstrapservers = System.getenv("KAFKA_BOOTSTRAP_SERVERS");
+        String elasticsearchHost = System.getenv("ELASTICSEARCH_HOST");
+        int elasticsearchPort = Integer.valueOf(System.getenv("ELASTICSEARCH_PORT"));
+        return new Config("demo", kafkabootstrapservers, elasticsearchHost, elasticsearchPort);
     }
 
     @Bean
