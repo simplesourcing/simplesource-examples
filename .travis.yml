@@ -7,7 +7,7 @@ before_install:
   - git clone https://github.com/guizmaii/simplesource.git
   - cd simplesource
   - git checkout fix_35
-  - make install
+  - mvn install
   - cd ..
 
 script:
