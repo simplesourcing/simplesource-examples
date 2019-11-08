@@ -1,35 +1,147 @@
 package io.simplesource.example.auction.domain;
 
-import lombok.Value;
+import io.simplesource.api.CommandError;
 
-@Value
-public class AccountError {
-    private final Reason reason;
-    private final String message;
+public abstract class AccountError extends CommandError {
 
-    public Reason getReason() {
-        return reason;
+    private AccountError() {
+        super();
     }
 
-    public String getMessage() {
-        return message;
+    private AccountError(String message) {
+        super(message);
     }
 
-    public static AccountError of(final Reason reason) {
-        return of(reason, "");
-    }
-    public static AccountError of(final Reason reason, final String message) {
-        return new AccountError(reason, message);
+    private AccountError(Exception e) {
+        super(e);
     }
 
-    public enum Reason {
-        AccountDoesNotExist,
-        UserNameIsNotAvailable,
-        AccountIdAlreadyExist,
-        ReservationDoesNotExist,
-        ReservationIdAlreadyExist,
-        InvalidData,
-        CommandError,
-        UnknownError
+    public static final class AccountDoesNotExist extends AccountError {
+        private static final long serialVersionUID = -215585474456449068L;
+
+        public AccountDoesNotExist() {
+            super();
+        }
+
+        public AccountDoesNotExist(String message) {
+            super(message);
+        }
+
+        public AccountDoesNotExist(Exception e) {
+            super(e);
+        }
     }
+
+    public static final class UserNameIsNotAvailable extends AccountError {
+        private static final long serialVersionUID = 7884359587950289618L;
+
+        public UserNameIsNotAvailable() {
+            super();
+        }
+
+        public UserNameIsNotAvailable(String message) {
+            super(message);
+        }
+
+        public UserNameIsNotAvailable(Exception e) {
+            super(e);
+        }
+    }
+
+    public static final class AccountIdAlreadyExist extends AccountError {
+        private static final long serialVersionUID = -3309739681235200338L;
+
+        public AccountIdAlreadyExist() {
+            super();
+        }
+
+        public AccountIdAlreadyExist(String message) {
+            super(message);
+        }
+
+        public AccountIdAlreadyExist(Exception e) {
+            super(e);
+        }
+    }
+
+    public static final class ReservationDoesNotExist extends AccountError {
+        private static final long serialVersionUID = -2113054020515863952L;
+
+        public ReservationDoesNotExist() {
+            super();
+        }
+
+        public ReservationDoesNotExist(String message) {
+            super(message);
+        }
+
+        public ReservationDoesNotExist(Exception e) {
+            super(e);
+        }
+    }
+
+    public static final class ReservationIdAlreadyExist extends AccountError {
+        private static final long serialVersionUID = 2033262596717296449L;
+
+        public ReservationIdAlreadyExist() {
+            super();
+        }
+
+        public ReservationIdAlreadyExist(String message) {
+            super(message);
+        }
+
+        public ReservationIdAlreadyExist(Exception e) {
+            super(e);
+        }
+    }
+
+    public static final class InvalidData extends AccountError {
+        private static final long serialVersionUID = 1688373418492304969L;
+
+        public InvalidData() {
+            super();
+        }
+
+        public InvalidData(String message) {
+            super(message);
+        }
+
+        public InvalidData(Exception e) {
+            super(e);
+        }
+    }
+
+    public static final class AccountCommandError extends AccountError {
+        private static final long serialVersionUID = -1415934367096806312L;
+
+        public AccountCommandError() {
+            super();
+        }
+
+        public AccountCommandError(String message) {
+            super(message);
+        }
+
+        public AccountCommandError(Exception e) {
+            super(e);
+        }
+    }
+
+    public static final class UnknownError extends AccountError {
+        private static final long serialVersionUID = -4978397213848019725L;
+
+        public UnknownError() {
+            super();
+        }
+
+        public UnknownError(String message) {
+            super(message);
+        }
+
+        public UnknownError(Exception e) {
+            super(e);
+        }
+    }
+
 }

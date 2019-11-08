@@ -76,7 +76,7 @@ public final class AuctionCommandHandler {
     }
 
     private static Result<CommandError, NonEmptyList<AuctionEvent>> failure(final String message) {
-        return Result.failure(CommandError.of(CommandError.Reason.InvalidCommand, message));
+        return Result.failure(new CommandError.InvalidCommand(message));
     }
 
     private static Result<CommandError, NonEmptyList<AuctionEvent>> failure(final NonEmptyList<CommandError> reasons) {

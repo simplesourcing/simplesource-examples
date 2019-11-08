@@ -44,7 +44,7 @@ class AccountWriteServiceImplTest {
 
     private AccountWriteService accountWriteService;
 
-    private Account account = new Account("Bob", Money.valueOf("1000"), Collections.emptyList());;
+    private Account account = new Account("Bob", Money.valueOf("1000"), Collections.emptyList());
     private AccountKey key = new AccountKey(UUID.randomUUID());
 
     @BeforeEach
@@ -74,7 +74,7 @@ class AccountWriteServiceImplTest {
         FutureResult<AccountError, SagaResponse> result = accountWriteService.createAccount(key, account);
         assertThat(result.future().join().isFailure()).isTrue();
         assertThat(result.future().join().failureReasons()).contains(
-                NonEmptyList.of(AccountError.of(AccountError.Reason.AccountIdAlreadyExist, String.format("Account ID %s already exist", key.asString()))));
+                NonEmptyList.of(new AccountError.AccountIdAlreadyExist(String.format("Account ID %s already exist", key.asString()))));
         verifyZeroInteractions(commandApi);
         verifyZeroInteractions(sagaApi);
     }
@@ -87,7 +87,7 @@ class AccountWriteServiceImplTest {
         FutureResult<AccountError, SagaResponse> result = accountWriteService.createAccount(key, account);
         assertThat(result.future().join().isFailure()).isTrue();
         assertThat(result.future().join().failureReasons()).contains(
-                NonEmptyList.of(AccountError.of(AccountError.Reason.InvalidData, "Initial funds can not be negative")));
+                NonEmptyList.of(new AccountError.InvalidData("Initial funds can not be negative")));
         verifyZeroInteractions(commandApi);
         verifyZeroInteractions(sagaApi);
     }
@@ -132,6 +132,6 @@ class AccountWriteServiceImplTest {
         FutureResult<AccountError, Sequence> result = accountWriteService.addFunds(key, Money.valueOf("-10"));
         assertThat(result.future().join().isFailure()).isTrue();
         assertThat(result.future().join().failureReasons()).contains(
-                NonEmptyList.of(AccountError.of(AccountError.Reason.InvalidData, "Cannot add a negative amount")));
+                NonEmptyList.of(new AccountError.InvalidData("Cannot add a negative amount")));
     }
 }

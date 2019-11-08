@@ -32,7 +32,7 @@ public final class AllocationCommandHandler {
     }
 
     private static Result<CommandError, NonEmptyList<AllocationEvent>> failure(final String message) {
-        return Result.failure(CommandError.of(CommandError.Reason.InvalidCommand, message));
+        return Result.failure(new CommandError.InvalidCommand(message));
     }
 
     @SafeVarargs

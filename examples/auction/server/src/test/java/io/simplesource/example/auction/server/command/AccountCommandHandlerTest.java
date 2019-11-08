@@ -38,7 +38,7 @@ public class AccountCommandHandlerTest {
         Result<CommandError, NonEmptyList<AccountEvent>> result =
                 handler.interpretCommand(key, Optional.of(account), new AccountCommand.CreateAccount(
                         "username", Money.valueOf("1")));
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Account already created: " + key.asString()))));
     }
 
@@ -73,7 +73,7 @@ public class AccountCommandHandlerTest {
         Result<CommandError, NonEmptyList<AccountEvent>> result =
                 handler.interpretCommand(key, Optional.of(account), new AccountCommand.ReserveFunds(
                         reservationId, Instant.now(), auction, Money.valueOf("5"), "desc"));
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Insufficient funds available"))));
     }
 
@@ -87,7 +87,7 @@ public class AccountCommandHandlerTest {
         Result<CommandError, NonEmptyList<AccountEvent>> result =
                 handler.interpretCommand(key, Optional.of(account), new AccountCommand.ReserveFunds(
                         reservationId, timestamp, auction, Money.valueOf("1"), "desc"));
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Reservation already exists in this account"))));
     }
 
@@ -135,7 +135,7 @@ public class AccountCommandHandlerTest {
         Result<CommandError, NonEmptyList<AccountEvent>> result =
                 handler.interpretCommand(key, Optional.of(account), new AccountCommand.ConfirmReservation(
                         reservationId, Money.valueOf("1")));
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Reservation can not be found for this account"))));
     }
 }

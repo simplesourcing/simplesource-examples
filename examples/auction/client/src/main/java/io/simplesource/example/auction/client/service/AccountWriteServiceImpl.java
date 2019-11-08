@@ -20,9 +20,8 @@ import io.simplesource.example.auction.command.AccountCommand;
 import io.simplesource.example.auction.core.Money;
 import io.simplesource.example.auction.domain.Account;
 import io.simplesource.example.auction.domain.AccountError;
-import io.simplesource.example.auction.domain.AccountError.Reason;
 import io.simplesource.example.auction.domain.AccountKey;
-import io.simplesource.saga.model.action.ActionCommand;
+import io.simplesource.saga.client.dsl.SagaDSL;
 import io.simplesource.saga.model.action.ActionId;
 import io.simplesource.saga.model.api.SagaAPI;
 import io.simplesource.saga.model.messages.SagaRequest;
@@ -30,7 +29,6 @@ import io.simplesource.saga.model.messages.SagaResponse;
 import io.simplesource.saga.model.saga.Saga;
 import io.simplesource.saga.model.saga.SagaError;
 import io.simplesource.saga.model.saga.SagaId;
-import io.simplesource.saga.client.dsl.SagaDSL;
 import org.apache.avro.generic.GenericRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,9 +39,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,7 +52,7 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
     private Logger logger = LoggerFactory.getLogger(AccountWriteServiceImpl.class);
 
     private static final Function<CommandError, AccountError> COMMAND_ERROR_TO_ACCOUNT_ERROR_FUNCTION =
-            ce -> AccountError.of(Reason.CommandError, ce.getReason() + ":" + ce.getMessage());
+            ce -> new AccountError.AccountCommandError(ce);
 
     private final AccountRepository accountRepository;
     private final CommandAPI<AccountKey, AccountCommand> accountCommandAPI;
@@ -85,8 +83,7 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                 Stream.of(
                         validUsername(account.username()),
                         validateFunds(account.funds(), "Initial funds can not be negative"),
-                        existingAccount.map(acc -> AccountError.of(Reason.AccountIdAlreadyExist,
-                                String.format("Account ID %s already exist", acc.getId())))
+                        existingAccount.map(acc -> new AccountError.AccountIdAlreadyExist(String.format("Account ID %s already exist", acc.getId())))
                 )
                         .filter(Optional::isPresent)
                         .map(Optional::get)
@@ -110,7 +107,7 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                     ));
                     Result<SagaError, Saga<GenericRecord>> built = sagaBuilder.build();
                     return built.fold(
-                            e -> FutureResult.fail(AccountError.of(AccountError.Reason.UnknownError)),
+                            e -> FutureResult.fail(new AccountError.UnknownError()),
                             s -> submitAndQuerySagaResponse(SagaRequest.of(SagaId.random(), s))
                     );
                 });
@@ -133,15 +130,14 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                 .collect(Collectors.toList());
 
 
-        Optional<AccountView> existingAccount = accountRepository
-                .findByAccountId(accountKey.id().toString());
+        Optional<AccountView> existingAccount = accountRepository.findByAccountId(accountKey.id().toString());
 
-        return NonEmptyList.fromList(validationErrorReasons)
-                .map(FutureResult::<AccountError, SagaResponse>fail)
-                .orElseGet(() ->
+        Supplier<FutureResult<AccountError, SagaResponse>> doUpdate = () ->
+                (FutureResult<AccountError, SagaResponse>)
                         existingAccount.map(account -> {
                             String previousUsername = account.getUserName();
                             SagaDSL.SagaBuilder<GenericRecord> sagaBuilder = SagaDSL.SagaBuilder.create();
+
                             sagaBuilder.addAction(
                                     ActionId.random(),
                                     AppShared.USERNAME_ALLOCATION_AGGREGATE_NAME,
@@ -156,13 +152,18 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                                     AppShared.USERNAME_ALLOCATION_AGGREGATE_NAME,
                                     new AllocationSagaCommand(previousUsername, new Release())
                             ));
+
                             return sagaBuilder.build().fold(
-                                    e -> FutureResult.<AccountError, SagaResponse>fail(AccountError.of(Reason.UnknownError)),
+                                    e -> FutureResult.<AccountError, SagaResponse>fail(new AccountError.UnknownError()),
                                     s -> sagaAPI.submitSaga(SagaRequest.<GenericRecord>of(SagaId.random(), s))
                                             .flatMap(u -> sagaAPI.getSagaResponse((SagaId) u, sagaResponseTimeout))
-                                            .errorMap(e -> AccountError.of(Reason.CommandError))
+                                            .errorMap(e -> new AccountError.AccountCommandError())
                             );
-                        }).orElse(FutureResult.<AccountError, SagaResponse>fail(AccountError.of(Reason.AccountDoesNotExist))));
+                        }).orElse(FutureResult.<AccountError, SagaResponse>fail(new AccountError.AccountDoesNotExist()));
+
+        return NonEmptyList.fromList(validationErrorReasons)
+                .map(FutureResult::<AccountError, SagaResponse>fail)
+                .orElseGet(doUpdate);
     }
 
     @Override
@@ -180,13 +181,13 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
 
         return maybeAccount
                 .map(a -> commandAndQueryAccount(accountKey, Sequence.position(a.getLastEventSequence()), command, duration))
-                .orElse(FutureResult.fail(AccountError.of(Reason.AccountDoesNotExist)));
+                .orElse(FutureResult.fail(new AccountError.AccountDoesNotExist()));
     }
 
     public FutureResult<AccountError, SagaResponse> submitAndQuerySagaResponse(SagaRequest<GenericRecord> sagaRequest) {
         return sagaAPI.submitSaga(sagaRequest)
                 .flatMap(u -> sagaAPI.getSagaResponse(u, sagaResponseTimeout))
-                .errorMap(e -> AccountError.of(AccountError.Reason.CommandError));
+                .errorMap(e -> new AccountError.AccountCommandError());
     }
 
     private <C extends AccountCommand> FutureResult<AccountError, Sequence> commandAndQueryAccount(AccountKey accountKey,
@@ -201,12 +202,12 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
 
         Future<Result<AccountError, Sequence>> future = commandResult.fold(failureMapFunc, Result::success);
 
-        return FutureResult.ofFutureResult(future, exp -> AccountError.of(Reason.UnknownError, exp.getMessage()));
+        return FutureResult.ofFutureResult(future, AccountError.UnknownError::new);
     }
 
     private Optional<AccountError> validUsername(String username) {
         if (StringUtils.isEmpty(username)) {
-            return Optional.of(AccountError.of(Reason.InvalidData, "Username can not be empty"));
+            return Optional.of(new AccountError.InvalidData("Username can not be empty"));
         }
 
         return Optional.empty();
@@ -214,7 +215,7 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
 
     private Optional<AccountError> validateFunds(Money funds, String msg) {
         if (funds == null || funds.isNegativeAmount())
-            return Optional.of(AccountError.of(Reason.InvalidData, msg));
+            return Optional.of(new AccountError.InvalidData(msg));
 
         return Optional.empty();
     }

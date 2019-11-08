@@ -3,10 +3,7 @@ package io.simplesource.example.auction.client.service;
 import io.simplesource.api.CommandAPI;
 import io.simplesource.api.CommandError;
 import io.simplesource.api.CommandId;
-import io.simplesource.data.FutureResult;
-import io.simplesource.data.NonEmptyList;
-import io.simplesource.data.Result;
-import io.simplesource.data.Sequence;
+import io.simplesource.data.*;
 import io.simplesource.example.auction.AppShared;
 import io.simplesource.example.auction.account.wire.AccountSagaCommand;
 import io.simplesource.example.auction.account.wire.CancelReservation;
@@ -26,16 +23,16 @@ import io.simplesource.example.auction.domain.Auction;
 import io.simplesource.example.auction.domain.AuctionError;
 import io.simplesource.example.auction.domain.AuctionKey;
 import io.simplesource.example.auction.domain.Bid;
-import io.simplesource.saga.model.action.ActionCommand;
+import io.simplesource.saga.client.dsl.SagaDSL;
 import io.simplesource.saga.model.action.ActionId;
 import io.simplesource.saga.model.api.SagaAPI;
 import io.simplesource.saga.model.messages.SagaRequest;
 import io.simplesource.saga.model.messages.SagaResponse;
 import io.simplesource.saga.model.saga.SagaError;
 import io.simplesource.saga.model.saga.SagaId;
-import io.simplesource.saga.client.dsl.SagaDSL;
+import lombok.experimental.ExtensionMethod;
+import lombok.val;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.specific.SpecificRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -51,12 +48,13 @@ import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
+@ExtensionMethod(OptionalExtension.class)
 public class AuctionWriteServiceImpl implements AuctionWriteService {
 
     private Logger logger = LoggerFactory.getLogger(AuctionWriteServiceImpl.class);
 
     private static final Function<CommandError, AuctionError> COMMAND_ERROR_TO_AUCTION_ERROR_FUNCTION =
-            ce -> AuctionError.of(AuctionError.Reason.CommandError, ce.getReason() + ":" + ce.getMessage());
+            ce -> new AuctionError.CommandError(ce);
 
     private final CommandAPI<AuctionKey, AuctionCommand> auctionCommandAPI;
     private final SagaAPI<GenericRecord> sagaAPI;
@@ -89,8 +87,7 @@ public class AuctionWriteServiceImpl implements AuctionWriteService {
                         validateRequired(auction.title(), "Title can not be empty"),
                         validateRequired(auction.description(), "Description can not be empty"),
                         validateAmount(auction.reservePrice(), "Reserved price can not be negative"),
-                        existingAuction.map(a -> AuctionError.of(AuctionError.Reason.AuctionIdAlreadyExist,
-                                String.format("Auction ID %s already exist", a.getId())))
+                        existingAuction.map(a -> new AuctionError.AuctionIdAlreadyExist(String.format("Auction ID %s already exist", a.getId())))
                 )
                         .filter(Optional::isPresent)
                         .map(Optional::get)
@@ -131,8 +128,10 @@ public class AuctionWriteServiceImpl implements AuctionWriteService {
         Optional<AccountView> existingAccount = accountRepository
                 .findById(bid.bidder().asString());
 
-        return existingAuction.map(auction -> {
-            return existingAccount.map(account -> {
+        Function<Pair<AuctionView, AccountView>, FutureResult<AuctionError, SagaResponse>> f =
+            (pair) -> {
+                val auction = pair._1();
+                val account = pair._2();
                 String desc = "Bid " + bid.amount().toString() + " on " + auction.getTitle();
                 SagaDSL.SagaBuilder<GenericRecord> sagaBuilder = SagaDSL.SagaBuilder.create();
                 sagaBuilder.addAction(
@@ -150,16 +149,22 @@ public class AuctionWriteServiceImpl implements AuctionWriteService {
                                 bid.reservationId().asString(), bid.timestamp().toEpochMilli(), bid.bidder().asString(), bid.amount().getAmount()), auction.getLastEventSequence())
                 ));
                 return sagaBuilder.build().fold(
-                        e -> FutureResult.<AuctionError, SagaResponse>fail(AuctionError.of(AuctionError.Reason.UnknownError)),
+                        e -> FutureResult.<AuctionError, SagaResponse>fail(new AuctionError.UnknownError()),
                         s -> {
-                          FutureResult<SagaError, SagaId> response = sagaAPI.submitSaga(SagaRequest.<GenericRecord>of(SagaId.random(), s));
-                          return response
-                                .flatMap(u -> sagaAPI.getSagaResponse(u, sagaResponseTimeout))
-                                .errorMap(e -> AuctionError.of(AuctionError.Reason.CommandError));
+                            FutureResult<SagaError, SagaId> response = sagaAPI.submitSaga(SagaRequest.<GenericRecord>of(SagaId.random(), s));
+                            return response
+                                    .flatMap(u -> sagaAPI.getSagaResponse(u, sagaResponseTimeout))
+                                    .errorMap(e -> new AuctionError.CommandError());
                         }
                 );
-            }).orElse(FutureResult.<AuctionError, SagaResponse>fail(AuctionError.of(AuctionError.Reason.AccountDoesNotExist)));
-        }).orElse(FutureResult.<AuctionError, SagaResponse>fail(AuctionError.of(AuctionError.Reason.AuctionDoesNotExist)));
+            };
+
+        return existingAuction
+                .zip(existingAccount)
+                .fold(
+                        () -> FutureResult.<AuctionError, SagaResponse>fail(new AuctionError.AuctionDoesNotExist()),
+                        f
+                );
     }
 
     @Override
@@ -206,28 +211,28 @@ public class AuctionWriteServiceImpl implements AuctionWriteService {
                 ));
             }
             return sagaBuilder.build().fold(
-                    e -> FutureResult.<AuctionError, SagaResponse>fail(AuctionError.of(AuctionError.Reason.UnknownError)),
+                    e -> FutureResult.<AuctionError, SagaResponse>fail(new AuctionError.UnknownError()),
                     s -> {
                       FutureResult<SagaError, SagaId> response = sagaAPI.submitSaga(SagaRequest.<GenericRecord>of(SagaId.random(), s));
                       return response
                             .flatMap(u -> sagaAPI.getSagaResponse(u, Duration.ofMillis(10000)))
-                            .errorMap(e -> AuctionError.of(AuctionError.Reason.CommandError));
+                            .errorMap(e -> new AuctionError.CommandError());
                     }
             );
 
         });
-        return result.orElse(FutureResult.<AuctionError, SagaResponse>fail(AuctionError.of(AuctionError.Reason.AuctionDoesNotExist)));
+        return result.orElse(FutureResult.fail(new AuctionError.AuctionDoesNotExist()));
     }
 
     private Optional<AuctionError> validateRequired(String creator, String message) {
         return StringUtils.isEmpty(creator) ?
-                Optional.of(AuctionError.of(AuctionError.Reason.InvalidData, message)) :
+                Optional.of(new AuctionError.InvalidData(message)) :
                 Optional.empty();
     }
 
     private Optional<AuctionError> validateAmount(Money amount, String message) {
         return (amount == null || amount.isNegativeAmount()) ?
-                Optional.of(AuctionError.of(AuctionError.Reason.InvalidData, message)) :
+                Optional.of(new AuctionError.InvalidData(message)) :
                 Optional.empty();
     }
 
@@ -243,7 +248,7 @@ public class AuctionWriteServiceImpl implements AuctionWriteService {
 
         Future<Result<AuctionError, Sequence>> future = commandResult.fold(failureMapFunc, Result::success);
 
-        return FutureResult.ofFutureResult(future, exp -> AuctionError.of(AuctionError.Reason.UnknownError, exp.getMessage()));
+        return FutureResult.ofFutureResult(future, AuctionError.UnknownError::new);
     }
 
     private <C extends AuctionCommand> FutureResult<AuctionError, Sequence> commandAndQueryExistingAuction(AuctionKey auctionKey,
@@ -253,6 +258,6 @@ public class AuctionWriteServiceImpl implements AuctionWriteService {
 
         return maybeAuction
                 .map(a -> commandAndQueryAuction(auctionKey, Sequence.position(a.getLastEventSequence()), command, duration))
-                .orElse(FutureResult.fail(AuctionError.of(AuctionError.Reason.AuctionDoesNotExist)));
+                .orElse(FutureResult.fail(new AuctionError.AuctionDoesNotExist()));
     }
 }

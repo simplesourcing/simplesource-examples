@@ -30,7 +30,7 @@ public class AllocationCommandHandlerTest {
     public void claimFailure() {
         Result<CommandError, NonEmptyList<AllocationEvent>> result =
                 handler.interpretCommand(key, Optional.of(true), new AllocationCommand.Claim());
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Bob is already taken"))));
     }
 

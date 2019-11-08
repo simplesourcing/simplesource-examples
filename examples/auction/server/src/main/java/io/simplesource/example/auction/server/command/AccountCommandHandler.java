@@ -54,14 +54,14 @@ public final class AccountCommandHandler {
                 .map(d -> {
                     Optional<CommandError> reservationExists = d.fundReservations().stream().anyMatch(c ->
                             c.reservationId().id().equals(command.reservationId().id())) ?
-                            Optional.of(CommandError.of(CommandError.Reason.InvalidCommand, "Reservation already exists in this account")) :
+                            Optional.of(new CommandError.InvalidCommand("Reservation already exists in this account")) :
                             Optional.empty();
 
                     Reservation reservation = new Reservation(command.reservationId(), command.timestamp(), command.auction(), command.funds(),
                             command.description(), Reservation.Status.DRAFT);
                     Optional<CommandError> insufficientFunds =
                             d.reserve(reservation).availableFunds().compareTo(Money.ZERO) < 0 ?
-                                    Optional.of(CommandError.of(CommandError.Reason.InvalidCommand, "Insufficient funds available")) :
+                                    Optional.of(new CommandError.InvalidCommand("Insufficient funds available")) :
                                     Optional.empty();
 
                     List<CommandError> validationErrorReasons = Stream.of(
@@ -97,10 +97,10 @@ public final class AccountCommandHandler {
                             c.reservationId().id().equals(command.reservationId().id())).findAny();
 
                     Optional<CommandError> reservationMissing = existingReservation.isPresent() ?
-                            Optional.empty() : Optional.of(CommandError.of(CommandError.Reason.InvalidCommand, "Reservation can not be found for this account"));
+                            Optional.empty() : Optional.of(new CommandError.InvalidCommand("Reservation can not be found for this account"));
 
                     Optional<CommandError> insufficientFunds = existingReservation.filter(r -> r.amount().compareTo(command.finalAmount()) < 0)
-                            .map(r -> CommandError.of(CommandError.Reason.InvalidCommand, "Insufficient funds available"));
+                            .map(r -> new CommandError.InvalidCommand("Insufficient funds available"));
 
                     List<CommandError> validationErrorReasons = Stream.of(
                             reservationMissing,
@@ -118,7 +118,7 @@ public final class AccountCommandHandler {
     }
 
     private static Result<CommandError, NonEmptyList<AccountEvent>> failure(final String message) {
-        return Result.failure(CommandError.of(CommandError.Reason.InvalidCommand, message));
+        return Result.failure(new CommandError.InvalidCommand(message));
     }
 
     private static Result<CommandError, NonEmptyList<AccountEvent>> failure(final NonEmptyList<CommandError> reasons) {

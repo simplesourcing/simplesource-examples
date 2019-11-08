@@ -41,7 +41,7 @@ public class AuctionCommandHandlerTest {
         Result<CommandError, NonEmptyList<AuctionEvent>> result =
                 handler.interpretCommand(key, Optional.of(auction), new AuctionCommand.CreateAuction(
                         "creator", "title", "desc", Money.valueOf("1"), Duration.ofDays(1)));
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Auction already created: " + key.asString()))));
     }
 
@@ -65,7 +65,7 @@ public class AuctionCommandHandlerTest {
         Result<CommandError, NonEmptyList<AuctionEvent>> result =
                 handler.interpretCommand(key, Optional.of(auction), new AuctionCommand.StartAuction(
                         start));
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Cannot start an auction in STARTED state"))));
     }
 
@@ -93,7 +93,7 @@ public class AuctionCommandHandlerTest {
         Result<CommandError, NonEmptyList<AuctionEvent>> result =
                 handler.interpretCommand(key, Optional.empty(), new AuctionCommand.PlaceBid(
                         reservationId, Instant.now(), bidder, amount));
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Auction does not exist"))));
     }
 
@@ -127,7 +127,7 @@ public class AuctionCommandHandlerTest {
         Result<CommandError, NonEmptyList<AuctionEvent>> result =
                 handler.interpretCommand(key, Optional.of(auction), new AuctionCommand.PlaceBid(
                         reservationId, timestamp, bidder, amount));
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Bid must exceed existing high bid"))));
     }
 
@@ -144,7 +144,7 @@ public class AuctionCommandHandlerTest {
         Result<CommandError, NonEmptyList<AuctionEvent>> result =
                 handler.interpretCommand(key, Optional.of(auction), new AuctionCommand.PlaceBid(
                         reservationId, timestamp, bidder, amount));
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Bid must exceed existing high bid"))));
     }
 
@@ -160,7 +160,7 @@ public class AuctionCommandHandlerTest {
         Result<CommandError, NonEmptyList<AuctionEvent>> result =
                 handler.interpretCommand(key, Optional.of(auction), new AuctionCommand.PlaceBid(
                         reservationId, timestamp, bidder, amount));
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Bid must match or exceed reserve price"))));
     }
 
@@ -176,7 +176,7 @@ public class AuctionCommandHandlerTest {
         Result<CommandError, NonEmptyList<AuctionEvent>> result =
                 handler.interpretCommand(key, Optional.of(auction), new AuctionCommand.PlaceBid(
                         reservationId, timestamp, bidder, amount));
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Cannot place bid on auction in CREATED state"))));
     }
 
@@ -192,7 +192,7 @@ public class AuctionCommandHandlerTest {
         Result<CommandError, NonEmptyList<AuctionEvent>> result =
                 handler.interpretCommand(key, Optional.of(auction), new AuctionCommand.PlaceBid(
                         reservationId, timestamp, bidder, amount));
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Cannot place bid on auction in COMPLETED state"))));
     }
 
@@ -209,7 +209,7 @@ public class AuctionCommandHandlerTest {
         Result<CommandError, NonEmptyList<AuctionEvent>> result =
                 handler.interpretCommand(key, Optional.of(auction), new AuctionCommand.PlaceBid(
                         reservationId, timestamp, bidder, amount));
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Auction has ended"))));
     }
 
@@ -234,7 +234,7 @@ public class AuctionCommandHandlerTest {
                 new Bid(new ReservationId(UUID.randomUUID()), Instant.now(), new AccountKey(UUID.randomUUID()), amount)));
         Result<CommandError, NonEmptyList<AuctionEvent>> result =
                 handler.interpretCommand(key, Optional.of(auction), new AuctionCommand.CompleteAuction());
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Cannot complete an auction in COMPLETED state"))));
     }
 
@@ -247,7 +247,7 @@ public class AuctionCommandHandlerTest {
                 new Bid(new ReservationId(UUID.randomUUID()), Instant.now(), new AccountKey(UUID.randomUUID()), amount)));
         Result<CommandError, NonEmptyList<AuctionEvent>> result =
                 handler.interpretCommand(key, Optional.of(auction), new AuctionCommand.CompleteAuction());
-        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(CommandError.of(CommandError.Reason.InvalidCommand,
+        assertThat(result).isEqualTo(Result.failure(NonEmptyList.of(new CommandError.InvalidCommand(
                 "Auction has not reached the allotted time"))));
     }
 }

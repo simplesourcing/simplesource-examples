@@ -73,7 +73,7 @@ class AuctionWriteServiceImplTest {
         FutureResult<AuctionError, Sequence> result = auctionWriteService.createAuction(key, auction);
         assertThat(result.future().join().isFailure()).isTrue();
         assertThat(result.future().join().failureReasons()).contains(
-                NonEmptyList.of(AuctionError.of(AuctionError.Reason.AuctionIdAlreadyExist, String.format("Auction ID %s already exist", key.asString()))));
+                NonEmptyList.of(new AuctionError.AuctionIdAlreadyExist(String.format("Auction ID %s already exist", key.asString()))));
         verifyZeroInteractions(commandApi);
     }
 
@@ -87,9 +87,9 @@ class AuctionWriteServiceImplTest {
         assertThat(result.future().join().isFailure()).isTrue();
         assertThat(result.future().join().failureReasons()).contains(
                 NonEmptyList.of(
-                        AuctionError.of(AuctionError.Reason.InvalidData, "Creator can not be empty"),
-                        AuctionError.of(AuctionError.Reason.InvalidData, "Title can not be empty"),
-                        AuctionError.of(AuctionError.Reason.InvalidData, "Description can not be empty")
+                        new AuctionError.InvalidData("Creator can not be empty"),
+                        new AuctionError.InvalidData("Title can not be empty"),
+                        new AuctionError.InvalidData("Description can not be empty")
                 ));
         verifyZeroInteractions(commandApi);
     }
