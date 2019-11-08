@@ -3,10 +3,12 @@ jdk:
   - openjdk8
   - openjdk11
 
-script:
+before_install:
   - git clone https://github.com/guizmaii/simplesource.git
   - cd simplesource
   - git checkout fix_35
   - make install
   - cd ..
+
+script:
   - make build
