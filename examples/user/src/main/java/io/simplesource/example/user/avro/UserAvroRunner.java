@@ -46,8 +46,7 @@ public final class UserAvroRunner {
 
         // publish some commands
         logger.info("Started publishing commands");
-        final Result<CommandError, Sequence> result =
-            submitCommands(api).unsafePerform(e -> CommandError.of(CommandError.Reason.InternalError, e));
+        final Result<CommandError, Sequence> result = submitCommands(api).unsafePerform(CommandError.InternalError::new);
         logger.info("Result of commands {}", result);
         logger.info("All commands published");
     }
