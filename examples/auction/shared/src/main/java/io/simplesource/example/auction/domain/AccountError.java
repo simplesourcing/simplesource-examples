@@ -112,18 +112,18 @@ public abstract class AccountError extends CommandError {
         }
     }
 
-    public static final class AccountCommandError extends AccountError {
+    public static final class CommandError extends AccountError {
         private static final long serialVersionUID = -1415934367096806312L;
 
-        public AccountCommandError() {
+        public CommandError() {
             super();
         }
 
-        public AccountCommandError(String message) {
+        public CommandError(String message) {
             super(message);
         }
 
-        public AccountCommandError(Exception e) {
+        public CommandError(Exception e) {
             super(e);
         }
     }

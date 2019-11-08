@@ -1,7 +1,6 @@
 package io.simplesource.example.auction.client.service;
 
 import io.simplesource.api.CommandAPI;
-import io.simplesource.api.CommandError;
 import io.simplesource.api.CommandId;
 import io.simplesource.data.FutureResult;
 import io.simplesource.data.NonEmptyList;
@@ -51,8 +50,8 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
 
     private Logger logger = LoggerFactory.getLogger(AccountWriteServiceImpl.class);
 
-    private static final Function<CommandError, AccountError> COMMAND_ERROR_TO_ACCOUNT_ERROR_FUNCTION =
-            ce -> new AccountError.AccountCommandError(ce);
+    private static final Function<io.simplesource.api.CommandError, AccountError> COMMAND_ERROR_TO_ACCOUNT_ERROR_FUNCTION =
+            AccountError.CommandError::new;
 
     private final AccountRepository accountRepository;
     private final CommandAPI<AccountKey, AccountCommand> accountCommandAPI;
@@ -157,7 +156,7 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
                                     e -> FutureResult.<AccountError, SagaResponse>fail(new AccountError.UnknownError()),
                                     s -> sagaAPI.submitSaga(SagaRequest.<GenericRecord>of(SagaId.random(), s))
                                             .flatMap(u -> sagaAPI.getSagaResponse((SagaId) u, sagaResponseTimeout))
-                                            .errorMap(e -> new AccountError.AccountCommandError())
+                                            .errorMap(e -> new AccountError.CommandError())
                             );
                         }).orElse(FutureResult.<AccountError, SagaResponse>fail(new AccountError.AccountDoesNotExist()));
 
@@ -187,17 +186,17 @@ public final class AccountWriteServiceImpl implements AccountWriteService {
     public FutureResult<AccountError, SagaResponse> submitAndQuerySagaResponse(SagaRequest<GenericRecord> sagaRequest) {
         return sagaAPI.submitSaga(sagaRequest)
                 .flatMap(u -> sagaAPI.getSagaResponse(u, sagaResponseTimeout))
-                .errorMap(e -> new AccountError.AccountCommandError());
+                .errorMap(e -> new AccountError.CommandError());
     }
 
     private <C extends AccountCommand> FutureResult<AccountError, Sequence> commandAndQueryAccount(AccountKey accountKey,
                                                                                                    Sequence sequence, C command,
                                                                                                    Duration duration) {
 
-        FutureResult<CommandError, Sequence> commandResult = accountCommandAPI.publishAndQueryCommand(new CommandAPI.Request<>(CommandId.random(),
+        FutureResult<io.simplesource.api.CommandError, Sequence> commandResult = accountCommandAPI.publishAndQueryCommand(new CommandAPI.Request<>(CommandId.random(),
                 accountKey, sequence, command), duration);
 
-        Function<NonEmptyList<CommandError>, Result<AccountError, Sequence>> failureMapFunc =
+        Function<NonEmptyList<io.simplesource.api.CommandError>, Result<AccountError, Sequence>> failureMapFunc =
                 ers -> Result.failure(ers.map(COMMAND_ERROR_TO_ACCOUNT_ERROR_FUNCTION));
 
         Future<Result<AccountError, Sequence>> future = commandResult.fold(failureMapFunc, Result::success);
