@@ -1,4 +1,10 @@
 language: java
 jdk: oraclejdk8
 
-script: make build
+script:
+  - git clone https://github.com/guizmaii/simplesource.git
+  - cd simplesource
+  - git checkout fix_35
+  - make install
+  - cd ..
+  - make build
