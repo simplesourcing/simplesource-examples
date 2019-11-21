@@ -85,7 +85,7 @@ public final class UserAvroRunner {
         final EventSourcedClient client =
                 new EventSourcedClient().withKafkaConfig(builder -> builder.withKafkaBootstrap(bootstrapServers).build());
 
-        return client.createCommandApi(builder -> builder
+        return client.createCommandAPI(builder -> builder
                 .withClientId("userAvroClient")
                 .withName(aggregateName)
                 .withSerdes(avroCommandSerdes)

@@ -62,7 +62,7 @@ public final class UserJsonRunner {
                         .withKafkaBootstrap(bootstrapServers)
                         .build());
 
-        CommandAPI<UserKey, UserCommand> api = client.createCommandApi(builder -> builder
+        CommandAPI<UserKey, UserCommand> api = client.createCommandAPI(builder -> builder
                 .withClientId("userMappedJsonClient")
                 .withName(aggregateName)
                 .withResourceNamingStrategy(namingStrategy)
