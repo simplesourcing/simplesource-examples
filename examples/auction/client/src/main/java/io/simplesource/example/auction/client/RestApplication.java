@@ -12,7 +12,7 @@ import io.simplesource.example.auction.command.AccountCommand;
 import io.simplesource.example.auction.command.AuctionCommand;
 import io.simplesource.example.auction.domain.AccountKey;
 import io.simplesource.example.auction.domain.AuctionKey;
-import io.simplesource.kafka.dsl.EventSourcedClient;
+import io.simplesource.kafka.client.EventSourcedClient;
 import io.simplesource.kafka.spec.TopicSpec;
 import io.simplesource.saga.client.api.SagaClientBuilder;
 import io.simplesource.saga.model.api.SagaAPI;

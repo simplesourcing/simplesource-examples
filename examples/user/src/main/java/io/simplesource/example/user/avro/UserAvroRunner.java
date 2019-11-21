@@ -12,7 +12,7 @@ import io.simplesource.example.user.domain.UserKey;
 import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.api.CommandSerdes;
 import io.simplesource.kafka.dsl.EventSourcedApp;
-import io.simplesource.kafka.dsl.EventSourcedClient;
+import io.simplesource.kafka.client.EventSourcedClient;
 import io.simplesource.kafka.serialization.avro.AvroCommandSerdes;
 import io.simplesource.kafka.util.PrefixResourceNamingStrategy;
 import io.simplesource.kafka.serialization.avro.AvroAggregateSerdes;
@@ -60,13 +60,13 @@ public final class UserAvroRunner {
                         io.simplesource.example.user.avro.api.User.SCHEMA$);
 
 
-        new EventSourcedApp.EventSourcedAppBuilder()
+        new EventSourcedApp()
                 .withKafkaConfig(builder ->
                         builder
                                 .withKafkaApplicationId("userMappedAvroApp1")
                                 .withKafkaBootstrap(bootstrapServers)
                                 .build())
-                .addAggregate(UserAggregate.createSpec(
+                .withAggregate(UserAggregate.createSpec(
                         aggregateName,
                         avroAggregateSerdes,
                         namingStrategy,
