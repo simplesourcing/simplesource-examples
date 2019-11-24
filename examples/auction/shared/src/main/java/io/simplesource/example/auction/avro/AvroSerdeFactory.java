@@ -2,8 +2,7 @@ package io.simplesource.example.auction.avro;
 
 import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.api.CommandSerdes;
-import io.simplesource.kafka.serialization.avro.AvroAggregateSerdes;
-import io.simplesource.kafka.serialization.avro.AvroCommandSerdes;
+import io.simplesource.kafka.serialization.avro.AvroSerdes;
 import io.simplesource.kafka.serialization.util.GenericMapper;
 import org.apache.avro.Conversion;
 import org.apache.avro.Schema;
@@ -40,7 +39,7 @@ public abstract class AvroSerdeFactory<K, C, E, A> {
      */
     public AggregateSerdes<K, C, E, A> createAggregateSerdes() {
         registerConversions();
-        return new AvroAggregateSerdes<>(
+        return AvroSerdes.Custom.aggregate(
                 buildKeyMapper(), buildCommandMapper(), buildEventMapper(), buildAggregateMapper(),
                 schemaRegistryUrl, useMockSchemaRegistry,
                 schema);
@@ -53,7 +52,7 @@ public abstract class AvroSerdeFactory<K, C, E, A> {
      */
     public CommandSerdes<K, C> createCommandSerdes() {
         registerConversions();
-        return new AvroCommandSerdes<>(
+        return AvroSerdes.Custom.command(
                 buildKeyMapper(), buildCommandMapper(), schemaRegistryUrl, useMockSchemaRegistry);
     }
 

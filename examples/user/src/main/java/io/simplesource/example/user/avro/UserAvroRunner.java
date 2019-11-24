@@ -13,9 +13,8 @@ import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.api.CommandSerdes;
 import io.simplesource.kafka.dsl.EventSourcedApp;
 import io.simplesource.kafka.client.EventSourcedClient;
-import io.simplesource.kafka.serialization.avro.AvroCommandSerdes;
+import io.simplesource.kafka.serialization.avro.AvroSerdes;
 import io.simplesource.kafka.util.PrefixResourceNamingStrategy;
-import io.simplesource.kafka.serialization.avro.AvroAggregateSerdes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +52,7 @@ public final class UserAvroRunner {
 
     private static void startStreams() {
         final AggregateSerdes<UserKey, UserCommand, UserEvent, Optional<User>> avroAggregateSerdes =
-                new AvroAggregateSerdes<>(
+                AvroSerdes.Custom.aggregate(
                         keyMapper, commandMapper, eventMapper, aggregateMapper,
                         schemaRegistry,
                         false,
@@ -77,7 +76,7 @@ public final class UserAvroRunner {
 
     private static CommandAPI<UserKey, UserCommand> startClient() {
         final CommandSerdes<UserKey, UserCommand> avroCommandSerdes =
-                new AvroCommandSerdes<>(
+                AvroSerdes.Custom.command(
                         keyMapper, commandMapper,
                         schemaRegistry,
                         false);
