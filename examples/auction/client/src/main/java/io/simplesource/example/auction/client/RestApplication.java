@@ -79,7 +79,7 @@ public class RestApplication {
     public AccountWriteService accountWriteService(@Qualifier("createClient") EventSourcedClient client,
                                                    SagaAPI<GenericRecord> sagaAPI,
                                                    AccountRepository accountRepository) {
-        CommandAPI<AccountKey, AccountCommand> commandApi = client.createCommandApi(builder -> builder
+        CommandAPI<AccountKey, AccountCommand> commandApi = client.createCommandAPI(builder -> builder
                 .withClientId("client_id")
                 .withCommandResponseRetention(3600L)
                 .withName(ACCOUNT_AGGREGATE_NAME)
@@ -105,7 +105,7 @@ public class RestApplication {
                                                    SagaAPI<GenericRecord> sagaAPI,
                                                    AccountRepository accountRepository,
                                                    AuctionRepository auctionRepository) {
-        CommandAPI<AuctionKey, AuctionCommand> commandApi = client.createCommandApi(builder -> builder
+        CommandAPI<AuctionKey, AuctionCommand> commandApi = client.createCommandAPI(builder -> builder
                 .withClientId("client_id")
                 .withCommandResponseRetention(3600L)
                 .withName(AUCTION_AGGREGATE_NAME)
