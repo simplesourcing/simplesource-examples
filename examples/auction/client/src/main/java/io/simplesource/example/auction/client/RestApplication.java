@@ -37,6 +37,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -81,7 +83,7 @@ public class RestApplication {
                                                    AccountRepository accountRepository) {
         CommandAPI<AccountKey, AccountCommand> commandApi = client.createCommandAPI(builder -> builder
                 .withClientId("client_id")
-                .withCommandResponseRetention(3600L)
+                .withCommandResponseRetention(Duration.of(1, ChronoUnit.HOURS))
                 .withName(ACCOUNT_AGGREGATE_NAME)
                 .withSerdes(new AccountAvroMappers(SCHEMA_REGISTRY_URL, false).createCommandSerdes())
                 .withResourceNamingStrategy(AppShared.resourceNamingStrategy())
@@ -107,7 +109,7 @@ public class RestApplication {
                                                    AuctionRepository auctionRepository) {
         CommandAPI<AuctionKey, AuctionCommand> commandApi = client.createCommandAPI(builder -> builder
                 .withClientId("client_id")
-                .withCommandResponseRetention(3600L)
+                .withCommandResponseRetention(Duration.of(1, ChronoUnit.HOURS))
                 .withName(AUCTION_AGGREGATE_NAME)
                 .withSerdes(new AuctionAvroMappers(SCHEMA_REGISTRY_URL, false).createCommandSerdes())
                 .withResourceNamingStrategy(AppShared.resourceNamingStrategy())
