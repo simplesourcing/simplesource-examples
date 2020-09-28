@@ -7,7 +7,7 @@
     "@hocs/omit-props": "^0.3.0",
     "@hocs/with-lifecycle": "^0.3.0",
     "@hocs/with-log": "^0.3.0",
-    "axios": "^0.18.0",
+    "axios": "^0.18.1",
     "bootstrap": "^3.4.1",
     "deep-equal": "^1.0.1",
     "node-sass-chokidar": "^1.3.3",
