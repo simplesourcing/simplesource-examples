@@ -1,7 +1,6 @@
 package io.simplesource.example.auction.client;
 
 import io.simplesource.api.CommandAPI;
-import io.simplesource.api.CommandAPISet;
 import io.simplesource.example.auction.AppShared;
 import io.simplesource.example.auction.avro.AccountAvroMappers;
 import io.simplesource.example.auction.avro.AuctionAvroMappers;
@@ -13,10 +12,10 @@ import io.simplesource.example.auction.command.AccountCommand;
 import io.simplesource.example.auction.command.AuctionCommand;
 import io.simplesource.example.auction.domain.AccountKey;
 import io.simplesource.example.auction.domain.AuctionKey;
-import io.simplesource.kafka.dsl.EventSourcedClient;
+import io.simplesource.kafka.client.EventSourcedClient;
 import io.simplesource.kafka.spec.TopicSpec;
-import io.simplesource.saga.model.api.SagaAPI;
 import io.simplesource.saga.client.api.SagaClientBuilder;
+import io.simplesource.saga.model.api.SagaAPI;
 import io.simplesource.saga.model.config.StreamAppConfig;
 import io.simplesource.saga.serialization.avro.AvroSerdes;
 import io.simplesource.saga.shared.topics.TopicNamer;
@@ -38,6 +37,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -49,39 +50,16 @@ import static io.simplesource.example.auction.AppShared.*;
 @SpringBootApplication
 public class RestApplication {
 
-    private CommandAPISet commandApiSet = null;
+    private EventSourcedClient client = null;
 
     @Bean
-    public CommandAPISet commandApiSet() {
+    public EventSourcedClient createClient() {
         SpecificData.get().addLogicalTypeConversion(new Conversions.DecimalConversion());
         GenericData.get().addLogicalTypeConversion(new Conversions.DecimalConversion());
-        if (commandApiSet == null) {
-            EventSourcedClient client = new EventSourcedClient();
-
-            client.withKafkaConfig(builder -> builder
-                    .withKafkaBootstrap(BOOTSTRAP_SERVERS)
-                    .build())
-                    .<AccountKey, AccountCommand>addCommands(builder -> builder
-                            .withClientId("client_id")
-                            .withCommandResponseRetention(3600L)
-                            .withName(ACCOUNT_AGGREGATE_NAME)
-                            .withSerdes(new AccountAvroMappers(SCHEMA_REGISTRY_URL, false).createCommandSerdes())
-                            .withResourceNamingStrategy(AppShared.resourceNamingStrategy())
-                            .withTopicSpec(new TopicSpec(8, (short) 1, Collections.emptyMap()))
-                            .build())
-                    .<AuctionKey, AuctionCommand>addCommands(builder -> builder
-                            .withClientId("client_id")
-                            .withCommandResponseRetention(3600L)
-                            .withName(AUCTION_AGGREGATE_NAME)
-                            .withSerdes(new AuctionAvroMappers(SCHEMA_REGISTRY_URL, false).createCommandSerdes())
-                            .withResourceNamingStrategy(AppShared.resourceNamingStrategy())
-                            .withTopicSpec(new TopicSpec(8, (short) 1, Collections.emptyMap()))
-                            .build());
-
-            commandApiSet = client
-                    .build();
+        if (client == null) {
+            client = new EventSourcedClient().withKafkaConfig(builder -> builder.withKafkaBootstrap(BOOTSTRAP_SERVERS).build());
         }
-        return commandApiSet;
+        return client;
     }
 
     @Bean
@@ -100,10 +78,17 @@ public class RestApplication {
     }
 
     @Bean
-    public AccountWriteService accountWriteService(@Qualifier("commandApiSet") CommandAPISet commandApiSet,
+    public AccountWriteService accountWriteService(@Qualifier("createClient") EventSourcedClient client,
                                                    SagaAPI<GenericRecord> sagaAPI,
                                                    AccountRepository accountRepository) {
-        CommandAPI<AccountKey, AccountCommand> commandApi = commandApiSet.getCommandAPI(ACCOUNT_AGGREGATE_NAME);
+        CommandAPI<AccountKey, AccountCommand> commandApi = client.createCommandAPI(builder -> builder
+                .withClientId("client_id")
+                .withCommandResponseRetention(Duration.of(1, ChronoUnit.HOURS))
+                .withName(ACCOUNT_AGGREGATE_NAME)
+                .withSerdes(new AccountAvroMappers(SCHEMA_REGISTRY_URL, false).createCommandSerdes())
+                .withResourceNamingStrategy(AppShared.resourceNamingStrategy())
+                .withTopicSpec(new TopicSpec(8, (short) 1, Collections.emptyMap()))
+                .build());
         return new AccountWriteServiceImpl(commandApi, sagaAPI, accountRepository);
     }
 
@@ -118,11 +103,18 @@ public class RestApplication {
     }
 
     @Bean
-    public AuctionWriteService auctionWriteService(@Qualifier("commandApiSet") CommandAPISet commandApiSet,
+    public AuctionWriteService auctionWriteService(@Qualifier("createClient") EventSourcedClient client,
                                                    SagaAPI<GenericRecord> sagaAPI,
                                                    AccountRepository accountRepository,
                                                    AuctionRepository auctionRepository) {
-        CommandAPI<AuctionKey, AuctionCommand> commandApi = commandApiSet.getCommandAPI(AUCTION_AGGREGATE_NAME);
+        CommandAPI<AuctionKey, AuctionCommand> commandApi = client.createCommandAPI(builder -> builder
+                .withClientId("client_id")
+                .withCommandResponseRetention(Duration.of(1, ChronoUnit.HOURS))
+                .withName(AUCTION_AGGREGATE_NAME)
+                .withSerdes(new AuctionAvroMappers(SCHEMA_REGISTRY_URL, false).createCommandSerdes())
+                .withResourceNamingStrategy(AppShared.resourceNamingStrategy())
+                .withTopicSpec(new TopicSpec(8, (short) 1, Collections.emptyMap()))
+                .build());
         return new AuctionWriteServiceImpl(commandApi, sagaAPI, accountRepository, auctionRepository);
     }
 

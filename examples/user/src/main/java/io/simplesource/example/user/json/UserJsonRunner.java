@@ -1,23 +1,19 @@
 package io.simplesource.example.user.json;
 
 import io.simplesource.api.CommandAPI;
-import io.simplesource.api.CommandAPISet;
 import io.simplesource.api.CommandError;
 import io.simplesource.data.Result;
 import io.simplesource.data.Sequence;
-import io.simplesource.example.user.UserAggregate;
 import io.simplesource.example.user.domain.User;
 import io.simplesource.example.user.domain.UserCommand;
 import io.simplesource.example.user.domain.UserEvent;
 import io.simplesource.example.user.domain.UserKey;
 import io.simplesource.kafka.api.AggregateSerdes;
-import io.simplesource.kafka.api.CommandSerdes;
+import io.simplesource.kafka.client.EventSourcedClient;
+import io.simplesource.kafka.dsl.AggregateBuilder;
 import io.simplesource.kafka.dsl.EventSourcedApp;
-import io.simplesource.kafka.dsl.EventSourcedClient;
-import io.simplesource.kafka.serialization.json.JsonCommandSerdes;
-import io.simplesource.kafka.util.PrefixResourceNamingStrategy;
 import io.simplesource.kafka.serialization.json.JsonAggregateSerdes;
-import io.simplesource.kafka.spec.AggregateSetSpec;
+import io.simplesource.kafka.util.PrefixResourceNamingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,8 +41,33 @@ public final class UserJsonRunner {
                     jsonOptionalDomainMapper());
 
     public static void main(final String[] args) {
+        EventSourcedApp app = new EventSourcedApp()
+                .withKafkaConfig(builder -> builder
+                        .withKafkaApplicationId("userMappedJsonApp")
+                        .withKafkaBootstrap(bootstrapServers)
+                        .build())
+                .withAggregate((AggregateBuilder<UserKey, UserCommand, UserEvent, Optional<User>> builder) -> builder
+                        .withName(aggregateName)
+                        .withSerdes(aggregateSerdes)
+                        .withResourceNamingStrategy(namingStrategy)
+                        .withInitialValue((k) -> Optional.empty())
+                        .withAggregator(UserEvent.getAggregator())
+                        .withCommandHandler(UserCommand.getCommandHandler())
+                        .build());
 
-        final CommandAPI<UserKey, UserCommand> api = startAll().getCommandAPI(aggregateName);
+        app.start();
+
+        EventSourcedClient client =
+                new EventSourcedClient().withKafkaConfig(builder -> builder
+                        .withKafkaBootstrap(bootstrapServers)
+                        .build());
+
+        CommandAPI<UserKey, UserCommand> api = client.createCommandAPI(builder -> builder
+                .withClientId("userMappedJsonClient")
+                .withName(aggregateName)
+                .withResourceNamingStrategy(namingStrategy)
+                .withSerdes(aggregateSerdes)
+                .build());
 
         // publish some commands
         logger.info("Started publishing commands");
@@ -56,22 +77,5 @@ public final class UserJsonRunner {
         logger.info("All commands published");
     }
 
-    private static CommandAPISet startAll() {
-        return new EventSourcedApp()
-            .withKafkaConfig(builder ->
-                    builder
-                        .withKafkaApplicationId("userMappedJsonApp1")
-                        .withKafkaBootstrap(bootstrapServers)
-                        .build())
-            .<UserKey, UserCommand, UserEvent, Optional<User>>addAggregate(builder -> builder
-                    .withName(aggregateName)
-                    .withSerdes(aggregateSerdes)
-                    .withResourceNamingStrategy(namingStrategy)
-                    .withInitialValue((k) -> Optional.empty())
-                    .withAggregator(UserEvent.getAggregator())
-                    .withCommandHandler(UserCommand.getCommandHandler())
-            )
-            .start()
-            .getCommandAPISet(aggregateName);
-    }
+
 }

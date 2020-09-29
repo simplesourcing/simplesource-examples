@@ -1,7 +1,6 @@
 package io.simplesource.example.user.avro;
 
 import io.simplesource.api.CommandAPI;
-import io.simplesource.api.CommandAPISet;
 import io.simplesource.api.CommandError;
 import io.simplesource.data.Result;
 import io.simplesource.data.Sequence;
@@ -13,10 +12,9 @@ import io.simplesource.example.user.domain.UserKey;
 import io.simplesource.kafka.api.AggregateSerdes;
 import io.simplesource.kafka.api.CommandSerdes;
 import io.simplesource.kafka.dsl.EventSourcedApp;
-import io.simplesource.kafka.dsl.EventSourcedClient;
-import io.simplesource.kafka.serialization.avro.AvroCommandSerdes;
+import io.simplesource.kafka.client.EventSourcedClient;
+import io.simplesource.kafka.serialization.avro.AvroSerdes;
 import io.simplesource.kafka.util.PrefixResourceNamingStrategy;
-import io.simplesource.kafka.serialization.avro.AvroAggregateSerdes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,14 +45,14 @@ public final class UserAvroRunner {
         // publish some commands
         logger.info("Started publishing commands");
         final Result<CommandError, Sequence> result =
-            submitCommands(api).unsafePerform(e -> CommandError.of(CommandError.Reason.InternalError, e));
+                submitCommands(api).unsafePerform(e -> CommandError.of(CommandError.Reason.InternalError, e));
         logger.info("Result of commands {}", result);
         logger.info("All commands published");
     }
 
     private static void startStreams() {
         final AggregateSerdes<UserKey, UserCommand, UserEvent, Optional<User>> avroAggregateSerdes =
-                new AvroAggregateSerdes<>(
+                AvroSerdes.Custom.aggregate(
                         keyMapper, commandMapper, eventMapper, aggregateMapper,
                         schemaRegistry,
                         false,
@@ -62,40 +60,35 @@ public final class UserAvroRunner {
 
 
         new EventSourcedApp()
-            .withKafkaConfig(builder ->
-                builder
-                    .withKafkaApplicationId("userMappedAvroApp1")
-                    .withKafkaBootstrap(bootstrapServers)
-                    .build())
-            .addAggregate(UserAggregate.createSpec(
-                aggregateName,
-                    avroAggregateSerdes,
-                    namingStrategy,
-                (k) -> Optional.empty()
-            ))
-            .start();
+                .withKafkaConfig(builder ->
+                        builder
+                                .withKafkaApplicationId("userMappedAvroApp1")
+                                .withKafkaBootstrap(bootstrapServers)
+                                .build())
+                .withAggregate(UserAggregate.createSpec(
+                        aggregateName,
+                        avroAggregateSerdes,
+                        namingStrategy,
+                        (k) -> Optional.empty()
+                ))
+                .start();
     }
 
     private static CommandAPI<UserKey, UserCommand> startClient() {
         final CommandSerdes<UserKey, UserCommand> avroCommandSerdes =
-                new AvroCommandSerdes<>(
+                AvroSerdes.Custom.command(
                         keyMapper, commandMapper,
                         schemaRegistry,
                         false);
 
-        final CommandAPISet commandApiSet =
-                new EventSourcedClient()
-                        .<UserKey, UserCommand>addCommands(builder -> builder
-                                .withClientId("userAvroClient")
-                                .withName(aggregateName)
-                                .withSerdes(avroCommandSerdes)
-                                .withResourceNamingStrategy(namingStrategy)
-                                .build())
-                        .withKafkaConfig(builder -> builder
-                                .withKafkaBootstrap(bootstrapServers)
-                                .build())
-                        .build();
+        final EventSourcedClient client =
+                new EventSourcedClient().withKafkaConfig(builder -> builder.withKafkaBootstrap(bootstrapServers).build());
 
-        return commandApiSet.getCommandAPI(aggregateName);
+        return client.createCommandAPI(builder -> builder
+                .withClientId("userAvroClient")
+                .withName(aggregateName)
+                .withSerdes(avroCommandSerdes)
+                .withResourceNamingStrategy(namingStrategy)
+                .build());
     }
 }

@@ -12,24 +12,19 @@ import io.simplesource.example.auction.avro.AuctionAvroMappers;
 import io.simplesource.example.auction.domain.AccountKey;
 import io.simplesource.example.auction.domain.AllocationKey;
 import io.simplesource.example.auction.domain.AuctionKey;
-import io.simplesource.kafka.serialization.avro.AvroCommandSerdes;
+import io.simplesource.kafka.serialization.avro.AvroSerdes;
 import io.simplesource.kafka.serialization.avro.AvroSpecificGenericMapper;
-import io.simplesource.kafka.spec.WindowSpec;
 import io.simplesource.saga.action.ActionApp;
 import io.simplesource.saga.action.eventsourcing.EventSourcingBuilder;
 import io.simplesource.saga.action.eventsourcing.EventSourcingSpec;
 import io.simplesource.saga.model.config.StreamAppConfig;
-import io.simplesource.saga.model.specs.ActionSpec;
-import io.simplesource.saga.model.specs.SagaSpec;
-import io.simplesource.saga.saga.app.SagaApp;
-import io.simplesource.saga.serialization.avro.AvroSerdes;
 import io.simplesource.saga.shared.topics.TopicNamer;
 import org.apache.avro.generic.GenericRecord;
 
-import static io.simplesource.example.auction.AppShared.*;
-
 import java.time.Duration;
 import java.util.Optional;
+
+import static io.simplesource.example.auction.AppShared.*;
 
 /**
  * App to convert saga actions to auction commands.
@@ -50,7 +45,7 @@ public class SagaActionProcessorApp {
                 r -> AccountKey.of(r.getAccountKey()),
                 c -> Sequence.position(c.getSequence()),
                 (k, c) -> Optional.empty(),
-                new AvroCommandSerdes(accountAvroMappers.buildKeyMapper(),
+                AvroSerdes.Custom.command(accountAvroMappers.buildKeyMapper(),
                         AvroSpecificGenericMapper.specificDomainMapper(), SCHEMA_REGISTRY_URL, false),
                 Duration.ofMillis(30000L)
         );
@@ -66,7 +61,7 @@ public class SagaActionProcessorApp {
                 // TODO What to do in lieu of extracting the sequence from the command?
                 c -> Sequence.position(c.getSequence()),
                 (k, c) -> Optional.empty(),
-                new AvroCommandSerdes(auctionAvroMappers.buildKeyMapper(),
+                AvroSerdes.Custom.command(auctionAvroMappers.buildKeyMapper(),
                         AvroSpecificGenericMapper.specificDomainMapper(), SCHEMA_REGISTRY_URL, false),
                 Duration.ofMillis(30000L)
         );
@@ -83,12 +78,12 @@ public class SagaActionProcessorApp {
                 // TODO What to do in lieu of extracting the sequence from the command?
                 c -> Sequence.first(),
                 (k, c) -> Optional.empty(),
-                new AvroCommandSerdes(allocationAvroMappers.buildKeyMapper(),
+                AvroSerdes.Custom.command(allocationAvroMappers.buildKeyMapper(),
                         AvroSpecificGenericMapper.specificDomainMapper(), SCHEMA_REGISTRY_URL, false),
                 Duration.ofMillis(30000L)
         );
 
-        ActionApp<GenericRecord> actionApp = ActionApp.of(AvroSerdes.Generic.actionSerdes(AppShared.SCHEMA_REGISTRY_URL, false))
+        ActionApp<GenericRecord> actionApp = ActionApp.of(io.simplesource.saga.serialization.avro.AvroSerdes.Generic.actionSerdes(AppShared.SCHEMA_REGISTRY_URL, false))
             .withActionProcessor(EventSourcingBuilder.apply(
                 accountCommands,
                 topicBuilder -> topicBuilder.withTopicNamer(TopicNamer.forPrefix(ACTION_TOPIC_PREFIX, ACCOUNT_AGGREGATE_NAME)).withDefaultTopicSpec(6, 1, 7),

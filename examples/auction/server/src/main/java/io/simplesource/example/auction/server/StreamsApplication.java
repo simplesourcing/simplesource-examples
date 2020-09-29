@@ -26,17 +26,17 @@ public class StreamsApplication {
                 .withKafkaApplicationId("auction_app")
                 .withKafkaBootstrap(BOOTSTRAP_SERVERS)
                 .build())
-            .addAggregate(AccountAggregate.createSpec(
+            .withAggregate(AccountAggregate.createSpec(
                     ACCOUNT_AGGREGATE_NAME,
                     new AccountAvroMappers(SCHEMA_REGISTRY_URL, false).createAggregateSerdes(),
                     resourceNamingStrategy(),
                     (k) -> Optional.empty()))
-            .addAggregate(AuctionAggregate.createSpec(
+            .withAggregate(AuctionAggregate.createSpec(
                     AUCTION_AGGREGATE_NAME,
                     new AuctionAvroMappers(SCHEMA_REGISTRY_URL, false).createAggregateSerdes(),
                     resourceNamingStrategy(),
                     (k) -> Optional.empty()))
-            .addAggregate(AllocationAggregate.createSpec(
+            .withAggregate(AllocationAggregate.createSpec(
                     USERNAME_ALLOCATION_AGGREGATE_NAME,
                     new AllocationAvroMappers(SCHEMA_REGISTRY_URL, false).createAggregateSerdes(),
                     resourceNamingStrategy(),
